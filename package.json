@@ -1,0 +1,87 @@
+{
+  "name": "@aller/pino-gcp-transport",
+  "description": "Pino google cloud structured logging stdout transport",
+  "version": "0.0.1",
+  "type": "module",
+  "module": "./src/index.js",
+  "main": "./lib/index.cjs",
+  "types": "./types/index.d.ts",
+  "license": "MIT",
+  "exports": {
+    ".": {
+      "types": "./types/index.d.ts",
+      "require": "./lib/index.cjs",
+      "import": "./src/index.js"
+    },
+    "./tracing": {
+      "types": "./types/index.d.ts",
+      "require": "./lib/tracing.cjs",
+      "import": "./src/tracing.js"
+    }
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "pretest": "npm run build",
+    "test": "mocha",
+    "posttest": "npm run lint && npm run example",
+    "lint": "eslint . --cache && prettier . --check --cache",
+    "example": "texample",
+    "prepublishOnly": "npm run build",
+    "cov:html": "c8 -n src -r html -r text mocha",
+    "test:lcov": "c8 -n src -r lcov -r text mocha",
+    "build": "rollup -c && dts-buddy"
+  },
+  "keywords": [
+    "pino",
+    "google cloud",
+    "logging",
+    "transport",
+    "structured",
+    "stdout"
+  ],
+  "author": {
+    "name": "Aller Media",
+    "url": "https://github.com/allermedia"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/allermedia/pino-gcp-transport.git"
+  },
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^28.0.1",
+    "@rollup/plugin-node-resolve": "^16.0.1",
+    "@types/chai": "^5.0.0",
+    "@types/express": "^4.17.21",
+    "@types/mocha": "^10.0.3",
+    "@types/node": "^20.17.27",
+    "c8": "^10.1.2",
+    "chai": "^5.1.1",
+    "chronokinesis": "^6.0.0",
+    "dts-buddy": "^0.5.3",
+    "eslint": "^9.3.0",
+    "exp-config": "^4.2.1",
+    "express": "^4.21.1",
+    "globals": "^16.0.0",
+    "mocha": "^11.1.0",
+    "nock": "^14.0.2",
+    "pino": "^9.1.0",
+    "pino-pretty": "^13.0.0",
+    "prettier": "^3.2.5",
+    "rollup": "^4.2.0",
+    "supertest": "^7.1.0",
+    "texample": "^0.0.7"
+  },
+  "peerDependencies": {
+    "pino-abstract-transport": "2.x",
+    "sonic-boom": "4.x"
+  },
+  "files": [
+    "src",
+    "lib",
+    "types",
+    "index.d.ts",
+    "tracing.d.ts"
+  ]
+}
