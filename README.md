@@ -2,6 +2,8 @@
 
 Convert stdout logging to structured json suitable for google cloud logging
 
+[![Build](https://github.com/allermedia/pino-gcp-transport/actions/workflows/build.yaml/badge.svg)](https://github.com/allermedia/pino-gcp-transport/actions/workflows/build.yaml)
+
 ## Setup example
 
 ```javascript
