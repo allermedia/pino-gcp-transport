@@ -1,0 +1,6 @@
+{
+  "projectId": "pino-gcp-transport-example-1",
+  "logging": {
+    "level": "debug"
+  }
+}

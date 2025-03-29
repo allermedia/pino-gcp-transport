@@ -48,10 +48,10 @@ export class StructuredTransformation extends Transform {
     const severity = this.convertToSeverity(line.level);
 
     return {
+      message: line.msg,
       ...this.extractProperties(line, this.ignoreKeys),
       timestamp: new Date(line.time),
       severity,
-      message: line.msg,
     };
   }
   /**
@@ -85,6 +85,10 @@ export class StructuredTransformation extends Transform {
     for (const [k, v] of Object.entries(line)) {
       switch (k) {
         case 'req': {
+          if (!line.msg) {
+            properties.message = `${v.method} ${v.url}`;
+          }
+
           /** @type {import('google').IHttpRequest} */
           const httpReq = {
             requestMethod: v.method,
@@ -101,6 +105,7 @@ export class StructuredTransformation extends Transform {
         }
       }
     }
+
     return properties;
   }
 }

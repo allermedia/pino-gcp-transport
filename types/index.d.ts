@@ -79,7 +79,7 @@ declare module '@aller/pino-gcp-transport' {
 		headerValue?: undefined;
 	};
 	/**
-	 * Create tracing middleware
+	 * Create express tracing middleware
 	 */
 	export function middleware(): (req: import("express").Request, _res: import("express").Response, next: import("express").NextFunction) => void;
 	/**
@@ -231,7 +231,7 @@ declare module '@aller/pino-gcp-transport/tracing' {
 		headerValue?: undefined;
 	};
 	/**
-	 * Create tracing middleware
+	 * Create express tracing middleware
 	 */
 	export function middleware(): (req: import("express").Request, _res: import("express").Response, next: import("express").NextFunction) => void;
 	/**

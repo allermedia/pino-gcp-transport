@@ -88,7 +88,7 @@ export function getTraceIdFromHeader(req) {
 }
 
 /**
- * Create tracing middleware
+ * Create express tracing middleware
  */
 export function middleware() {
   /**

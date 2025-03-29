@@ -41,9 +41,12 @@ describe('middleware', () => {
     app.get('/downstream', async (req, res, next) => {
       try {
         logger.debug('foo');
-        await request('https://example.com')
-          .get('/')
-          .set(getTraceHeadersAsObject(req.query.flags ? Number(req.query.flags) : undefined));
+        await fetch('https://example.local', {
+          method: 'GET',
+          headers: {
+            ...getTraceHeadersAsObject(req.query.flags ? Number(req.query.flags) : undefined),
+          },
+        });
         res.send({});
       } catch (err) {
         next(err);
@@ -51,7 +54,7 @@ describe('middleware', () => {
     });
 
     app.use('/log/request', (req, res) => {
-      logger.info(req, 'foo');
+      logger.info(req);
       res.send({});
     });
 
@@ -71,7 +74,7 @@ describe('middleware', () => {
   describe('trace headers', () => {
     it('request without trace headers forwards new trace headers to downstream calls', async () => {
       const downstreamCall = new Promise((resolve) =>
-        nock('https://example.com')
+        nock('https://example.local')
           .get('/')
           .reply(function reply() {
             resolve({ headers: this.req.headers });
@@ -89,7 +92,7 @@ describe('middleware', () => {
 
     it('request with legacy X-Cloud-Trace-Context header forwards trace headers to downstream calls', async () => {
       const downstreamCall = new Promise((resolve) =>
-        nock('https://example.com')
+        nock('https://example.local')
           .get('/')
           .reply(function reply() {
             resolve({ headers: this.req.headers });
@@ -112,7 +115,7 @@ describe('middleware', () => {
 
     it('request with traceparent header forwards trace headers to downstream calls', async () => {
       const downstreamCall = new Promise((resolve) =>
-        nock('https://example.com')
+        nock('https://example.local')
           .get('/')
           .reply(function reply() {
             resolve({ headers: this.req.headers });
@@ -131,7 +134,7 @@ describe('middleware', () => {
 
     it('settings trace flags to 1 forwards trace headers with flags to downstream calls', async () => {
       const downstreamCall = new Promise((resolve) =>
-        nock('https://example.com')
+        nock('https://example.local')
           .get('/')
           .reply(function reply() {
             resolve({ headers: this.req.headers });
@@ -150,7 +153,7 @@ describe('middleware', () => {
 
     it('settings trace flags to 16 forwards trace headers with flags to downstream calls', async () => {
       const downstreamCall = new Promise((resolve) =>
-        nock('https://example.com')
+        nock('https://example.local')
           .get('/')
           .reply(function reply() {
             resolve({ headers: this.req.headers });
@@ -169,7 +172,7 @@ describe('middleware', () => {
 
     it('settings trace flags above 255 uses default trace flags to downstream calls', async () => {
       const downstreamCall = new Promise((resolve) =>
-        nock('https://example.com')
+        nock('https://example.local')
           .get('/')
           .reply(function reply() {
             resolve({ headers: this.req.headers });
@@ -189,7 +192,7 @@ describe('middleware', () => {
 
   describe('logging', () => {
     it('logs calls with trace keys', async () => {
-      nock('https://example.com').get('/').reply(200, {});
+      nock('https://example.local').get('/').reply(200, {});
 
       await request(app).get('/downstream').set('traceparent', '00-traceid-spanid-00').query({ flags: '256' }).expect(200);
 
@@ -199,7 +202,7 @@ describe('middleware', () => {
     });
 
     it('logging request maps request to logging httpRequest', async () => {
-      nock('https://example.com').get('/').reply(200, {});
+      nock('https://example.local').get('/').reply(200, {});
 
       await request(app)
         .get('/log/request')
@@ -223,7 +226,7 @@ describe('middleware', () => {
     });
 
     it('logging request maps request method POST to logging httpRequest', async () => {
-      nock('https://example.com').get('/').reply(200, {});
+      nock('https://example.local').get('/').reply(200, {});
 
       await request(app).post('/log/request').expect(200);
 
@@ -235,8 +238,16 @@ describe('middleware', () => {
       expect(logReq).to.have.property('requestMethod', 'POST');
     });
 
+    it('logging request without message composes message from request', async () => {
+      nock('https://example.local').get('/').reply(200, {});
+
+      await request(app).post('/log/request').expect(200);
+
+      expect(logMessages.pop()).to.have.property('message', 'POST /log/request');
+    });
+
     it('logging error maps error message to message', async () => {
-      nock('https://example.com').get('/').reply(200, {});
+      nock('https://example.local').get('/').reply(200, {});
 
       await request(app).get('/log/error').query({ message: 'unexpected' }).expect(200);
 
