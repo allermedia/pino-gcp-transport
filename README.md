@@ -8,8 +8,9 @@ Convert stdout logging to structured json suitable for google cloud logging.
 
 ### Logging
 
+- `ignoreKeys`: optional list of pino ignore keys, filters what log line keys are sent to `jsonPayload`, defaults to `['hostname', 'pid', 'level', 'time', 'msg']`
 - `destination`: optional integer or string, integer `1` = stdout which is default, if a string is used the destination will be considered a log file, e.g. `./logs/test.log`
-- `append`: optional boolean, set to false if you want test logging to be reset between test runs, passed to [`sonic-boom`](https://www.npmjs.com/package/sonic-boom)
+- `append`: optional boolean, set to false if you want file test logging to be reset between test runs, passed to [`sonic-boom`](https://www.npmjs.com/package/sonic-boom)
 - `[key]`: any other options that can be passed to [`sonic-boom`](https://www.npmjs.com/package/sonic-boom)
 
 ### The projectId

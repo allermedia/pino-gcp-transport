@@ -255,5 +255,17 @@ describe('middleware', () => {
 
       expect(logMsg).to.have.property('message', 'unexpected');
     });
+
+    it('logging error maps error stack sourceLocation', async () => {
+      nock('https://example.local').get('/').reply(200, {});
+
+      await request(app).get('/log/error').query({ message: 'unexpected' }).expect(200);
+
+      const logMsg = logMessages.pop();
+
+      expect(logMsg).to.have.property('logging.googleapis.com/sourceLocation');
+      expect(logMsg['logging.googleapis.com/sourceLocation']).to.have.property('file').that.is.ok;
+      expect(logMsg['logging.googleapis.com/sourceLocation']).to.have.property('line').that.is.a('number');
+    });
   });
 });

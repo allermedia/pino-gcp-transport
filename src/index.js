@@ -3,7 +3,15 @@ import { Transform, promises as streamPromises } from 'node:stream';
 import abstractTransport from 'pino-abstract-transport';
 import SonicBoom from 'sonic-boom';
 
-import { SEVERITY_CRITICAL, SEVERITY_DEBUG, SEVERITY_ERROR, SEVERITY_INFO, SEVERITY_WARNING } from './constants.js';
+import {
+  SEVERITY_CRITICAL,
+  SEVERITY_DEBUG,
+  SEVERITY_ERROR,
+  SEVERITY_INFO,
+  SEVERITY_WARNING,
+  SOURCELOCATION_KEY,
+  STACK_PATTERN,
+} from './constants.js';
 
 export * from './tracing.js';
 export * from './constants.js';
@@ -99,6 +107,22 @@ export class StructuredTransformation extends Transform {
           properties.httpRequest = httpReq;
           break;
         }
+        case 'err': {
+          if (typeof v.stack !== 'string') {
+            continue;
+          }
+          const line = v.stack.match(STACK_PATTERN)?.groups;
+
+          console.log({ stack: v.stack, line });
+
+          if (line) {
+            properties[SOURCELOCATION_KEY] = {
+              file: line.file,
+              line: Number(line.line),
+              function: line.function,
+            };
+          }
+        }
         default: {
           if (ignoreKeys?.includes(k)) continue;
           properties[k] = v;
@@ -134,10 +158,16 @@ export default function compose(opts, Transformation = StructuredTransformation)
     destinations.push(new SonicBoom({ dest: opts?.destination ?? 1, ...opts }));
   }
 
-  return abstractTransport((source) => {
-    destinations.unshift(source);
-
+  return abstractTransport(
     // @ts-ignore
-    return streamPromises.pipeline(destinations);
-  });
+    (source) => {
+      destinations.unshift(source);
+
+      // @ts-ignore
+      return streamPromises.pipeline(destinations);
+    },
+    {
+      parseLine: true,
+    }
+  );
 }

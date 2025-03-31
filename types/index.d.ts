@@ -108,6 +108,8 @@ declare module '@aller/pino-gcp-transport' {
 	export const SEVERITY_EMERGENCY: string;
 	export const TRACE_ID_KEY: "logging.googleapis.com/trace";
 	export const SPAN_ID_KEY: "logging.googleapis.com/spanId";
+	export const SOURCELOCATION_KEY: "logging.googleapis.com/sourceLocation";
+	export const STACK_PATTERN: RegExp;
   /*!
    * Copyright 2015 Google Inc. All Rights Reserved.
    *
