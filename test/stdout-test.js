@@ -1,6 +1,6 @@
 import { execFile } from 'node:child_process';
 
-describe('compose', () => {
+describe('stdout', () => {
   it('logs to stdout by default', async () => {
     const { stdout } = await new Promise((resolve, reject) =>
       execFile('node', ['./test/logger.cjs'], (err, stdout, stderr) => {

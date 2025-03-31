@@ -113,8 +113,6 @@ export class StructuredTransformation extends Transform {
           }
           const line = v.stack.match(STACK_PATTERN)?.groups;
 
-          console.log({ stack: v.stack, line });
-
           if (line) {
             properties[SOURCELOCATION_KEY] = {
               file: line.file,

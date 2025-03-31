@@ -26,4 +26,5 @@ export const TRACE_ID_KEY = 'logging.googleapis.com/trace';
 export const SPAN_ID_KEY = 'logging.googleapis.com/spanId';
 export const SOURCELOCATION_KEY = 'logging.googleapis.com/sourceLocation';
 
-export const STACK_PATTERN = /^\s*at ((?<function>(?!file:)[\w.]+)(?: ))?(?:\[.+?\] )?(?:\()?(?<file>.+):(?<line>\d+):(?<col>\d+)(?:\))?$/m;
+export const STACK_PATTERN =
+  /^\s*at ((?<function>(?!file:)[\w.<>]+)(?: ))?(?:\[.+?\] )?(?:\()?(?<file>.+):(?<line>\d+):(?<col>\d+)(?:\))?$/m;
