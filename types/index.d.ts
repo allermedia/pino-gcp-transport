@@ -2,11 +2,11 @@ declare module '@aller/pino-gcp-transport' {
 	import type { Transform } from 'node:stream';
 	import type { SonicBoomOpts } from 'sonic-boom';
   /**
-   * Compose Application Insights pino transport
+   * Compose transport to write google cloud structured log
    * @param opts - transport options
-   * @param Transformation - optional Telemetry transformation stream
+   * @param Transformation - optional structured transformation stream
    * */
-  export default function compose(opts: StructuredTransformationConfig, Transformation?: typeof StructuredTransformation): ReturnType<typeof import("pino-abstract-transport")>;
+  export default function compose(opts: StructuredTransformationConfig, Transformation?: typeof StructuredTransformation | typeof Transform): ReturnType<typeof import("pino-abstract-transport")>;
   /**
    * Transform pino log record to Google Cloud logging
    *
@@ -26,7 +26,7 @@ declare module '@aller/pino-gcp-transport' {
 	  
 	  _transform(chunk: string | object, _encoding: string, callback: CallableFunction): void;
 	  /**
-	   * Convert to telemetryish object
+	   * Convert to structured object
 	   * */
 	  convertToStructured(chunk: string | object): StructuredJson;
 	  /**
@@ -36,11 +36,11 @@ declare module '@aller/pino-gcp-transport' {
 	  /**
 	   * Extract properties from log line
 	   * */
-	  extractProperties(line: any, ignoreKeys?: string[]): any;
+	  extractProperties(line: any): StructuredJson;
   }
   interface StructuredTransformationConfig extends SonicBoomOpts {
 	/**
-	 * pino ignore keys, filters Telemetry properties
+	 * pino ignore keys, optional list of pino ignore keys
 	 * @default {string[]} hostname pid, level, time, msg
 	 */
 	ignoreKeys?: string[];

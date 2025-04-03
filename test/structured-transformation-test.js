@@ -205,6 +205,27 @@ describe('StructuredTransformation', () => {
     expect(stackMatch[28].function, stackMatch[28].file).to.equal('Function.handle');
   });
 
+  it('maps error stack to logging key textPayload', () => {
+    const transport = abstractTransport(
+      (source) => {
+        pipeline(source, new StructuredTransformation(null, { projectId: 'aller-auth-1' }), destination, () => {});
+      },
+      {
+        parse: 'lines',
+      }
+    );
+
+    const logger = pino({ level: 'warn' }, transport);
+
+    logger.error(new Error('foo'));
+
+    const logMsg = msgs.pop();
+
+    expect(logMsg)
+      .to.have.property('textPayload')
+      .that.match(/Error: foo/);
+  });
+
   it('maps error stack to source location', () => {
     const transport = abstractTransport(
       (source) => {
@@ -298,6 +319,25 @@ describe('StructuredTransformation', () => {
     const logger = pino({ level: 'trace' }, transport);
 
     logger.error({ err: {} });
+
+    const logMsg = msgs.pop();
+
+    expect(logMsg).to.not.have.property('logging.googleapis.com/sourceLocation');
+  });
+
+  it('ignores error stack parsing value is null', () => {
+    const transport = abstractTransport(
+      (source) => {
+        pipeline(source, new StructuredTransformation(null, { projectId: 'aller-auth-1' }), destination, () => {});
+      },
+      {
+        parse: 'lines',
+      }
+    );
+
+    const logger = pino({ level: 'error' }, transport);
+
+    logger.error({ err: null });
 
     const logMsg = msgs.pop();
 

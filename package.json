@@ -1,7 +1,7 @@
 {
   "name": "@aller/pino-gcp-transport",
   "description": "Pino google cloud structured logging stdout transport",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "type": "module",
   "module": "./src/index.js",
   "main": "./lib/index.cjs",
@@ -27,7 +27,7 @@
     "test": "mocha",
     "posttest": "npm run lint && npm run example",
     "lint": "eslint . --cache && prettier . --check --cache",
-    "example": "texample",
+    "example": "texample -g",
     "prepublishOnly": "npm run build",
     "cov:html": "c8 -n src -r html -r text mocha",
     "test:lcov": "c8 -n src -r lcov -r text mocha",

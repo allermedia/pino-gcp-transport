@@ -4,56 +4,85 @@ Convert stdout logging to structured json suitable for google cloud logging.
 
 [![Build](https://github.com/allermedia/pino-gcp-transport/actions/workflows/build.yaml/badge.svg)](https://github.com/allermedia/pino-gcp-transport/actions/workflows/build.yaml)
 
-## Configure
+## Api
 
-### Logging
+Exported as ESM and commonjs.
 
-- `ignoreKeys`: optional list of pino ignore keys, filters what log line keys are sent to `jsonPayload`, defaults to `['hostname', 'pid', 'level', 'time', 'msg']`
-- `destination`: optional integer or string, integer `1` = stdout which is default, if a string is used the destination will be considered a log file, e.g. `./logs/test.log`
-- `append`: optional boolean, set to false if you want file test logging to be reset between test runs, passed to [`sonic-boom`](https://www.npmjs.com/package/sonic-boom)
-- `[key]`: any other options that can be passed to [`sonic-boom`](https://www.npmjs.com/package/sonic-boom)
+### `compose([options[, Transformation = StructuredTransformation]])`
 
-### The projectId
+Compose transport to get structured log. Default and named export.
 
-To be able to log trace the google project id needs to be passed to the mixin function `getLogTrace(projectId)`. Undefined is returned if called without project id.
+**Arguments**:
 
-The project id is used to format the log parameter `logging.googleapis.com/trace` formatted as `projects/${projectId.trim()}/traces/${traceId}`
+- `options`: optional structured transport options
+  - `ignoreKeys`: optional list of pino ignore keys, filters what log line keys are sent to `jsonPayload`, defaults to `['hostname', 'pid', 'level', 'time', 'msg']`
+  - `destination`: optional integer or string, integer `1` = stdout which is default, if a string is used the destination will be considered a log file, e.g. `./logs/test.log`
+  - `append`: optional boolean, set to false if you want file test logging to be reset between test runs, passed to [`sonic-boom`](https://www.npmjs.com/package/sonic-boom)
+  - `[key]`: any other options that can be passed to [`sonic-boom`](https://www.npmjs.com/package/sonic-boom)
+- `Transformation`: optional transformation stream type, defaults to builtin `StructuredTransformation` stream type, will be called with new. Can be used to override with extended StructuredTransformation type
 
-If deploying with terraform you can pick the id from your project resource, e.g:
-
-```terraform
-locals {
-  env_pfx = "MYAPP_"
-}
-
-resource "google_cloud_run_v2_service" "myapp" {
-  template {
-    containers {
-      image = "gcr.io/cloudrun/hello"
-
-      ports {
-        container_port = 3000
-      }
-
-      env {
-        name  = "NODE_ENV"
-        value = var.environment
-      }
-      env {
-        name  = "ENV_PREFIX"
-        value = local.env_pfx
-      }
-      env {
-        name  = "INTERPRET_CHAR_AS_DOT"
-        value = "_"
-      }
-
-      # The google project eventually picked up by exp-config as config.projectId, or just use as process.env.MYAPP_projectId
-      env {
-        name  = "${local.env_pfx}projectId"
-        value = google_project.default.project_id
-      }
+```javascript
+import compose, { StructuredTransformation } from '@aller/pino-gcp-transport';
 ```
+
+### `getLogTrace(projectId)`
+
+Used in mixin to get trace context logging params. Named export.
+
+**Arguments**:
+
+- `projectId`: required string [google project id](#the-projectid)
+
+**Returns**
+
+Object with structured log keys `logging.googleapis.com/trace` and `logging.googleapis.com/spanId`.
+
+```javascript
+import { getLogTrace } from '@aller/pino-gcp-transport';
+import pino from 'pino';
+
+export const logger = pino({
+  mixin() {
+    return { ...getLogTrace(process.env.MYAPP_projectId) };
+  },
+});
+```
+
+### `getTraceHeaders([flags = 0])`
+
+Used to forward tracing to donwstream calls. Named export.
+
+**Arguments**:
+
+- `flags`: optional positive integer, below 256, tracing flag, 0 = not sampled, 1 = sampled
+
+**Returns**
+
+Map with trace headers `traceparent` and legacy `x-cloud-trace-context`.
+
+```javascript
+import compose, { getTraceHeaders, getLogTrace } from '@aller/pino-gcp-transport';
+import pino from 'pino';
+
+export const logger = pino(
+  {
+    mixin() {
+      return { ...getLogTrace(process.env.MYAPP_projectId) };
+    },
+  },
+  compose()
+);
+
+await fetch('http://localhost:11434/get', {
+  headers: Object.fromEntries(getTraceHeaders()),
+}).catch((err) => {
+  logger.error(err);
+});
+```
+
+### `getTraceHeadersAsObject([flags = 0])`
+
+Same as [`getTraceHeaders`](#gettraceheadersflags--0) but returns object.
 
 ## Setup example
 
@@ -155,4 +184,46 @@ export default pino(
   },
   transport
 );
+```
+
+## The projectId
+
+To be able to log trace the google project id needs to be passed to the mixin function `getLogTrace(projectId)`. Undefined is returned if called without project id.
+
+The project id is used to format the log parameter `logging.googleapis.com/trace` formatted as `projects/${projectId.trim()}/traces/${traceId}`
+
+If deploying with terraform you can pick the id from your project resource, e.g:
+
+```terraform
+locals {
+  env_pfx = "MYAPP_"
+}
+
+resource "google_cloud_run_v2_service" "myapp" {
+  template {
+    containers {
+      image = "gcr.io/cloudrun/hello"
+
+      ports {
+        container_port = 3000
+      }
+
+      env {
+        name  = "NODE_ENV"
+        value = var.environment
+      }
+      env {
+        name  = "ENV_PREFIX"
+        value = local.env_pfx
+      }
+      env {
+        name  = "INTERPRET_CHAR_AS_DOT"
+        value = "_"
+      }
+
+      # The google project eventually picked up by exp-config as config.projectId, or just use as process.env.MYAPP_projectId
+      env {
+        name  = "${local.env_pfx}projectId"
+        value = google_project.default.project_id
+      }
 ```

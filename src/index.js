@@ -47,7 +47,7 @@ export class StructuredTransformation extends Transform {
     callback(null, structured);
   }
   /**
-   * Convert to telemetryish object
+   * Convert to structured object
    * @param {string | object} chunk
    * @returns {import('google').StructuredJson}
    */
@@ -57,7 +57,7 @@ export class StructuredTransformation extends Transform {
 
     return {
       message: line.msg,
-      ...this.extractProperties(line, this.ignoreKeys),
+      ...this.extractProperties(line),
       timestamp: new Date(line.time),
       severity,
     };
@@ -84,13 +84,15 @@ export class StructuredTransformation extends Transform {
   /**
    * Extract properties from log line
    * @param {any} line
-   * @param {string[]} [ignoreKeys]
-   * @returns {any}
    */
-  extractProperties(line, ignoreKeys) {
-    /** @type {Record<string, any>} */
+  extractProperties(line) {
+    const ignoreKeys = this.ignoreKeys;
+
+    /** @type {import('google').StructuredJson} */
     const properties = {};
     for (const [k, v] of Object.entries(line)) {
+      if (v === null || v === undefined) continue;
+
       switch (k) {
         case 'req': {
           if (!line.msg) {
@@ -112,6 +114,7 @@ export class StructuredTransformation extends Transform {
             continue;
           }
           const line = v.stack.match(STACK_PATTERN)?.groups;
+          properties.textPayload = v.stack;
 
           if (line) {
             properties[SOURCELOCATION_KEY] = {
@@ -133,9 +136,9 @@ export class StructuredTransformation extends Transform {
 }
 
 /**
- * Compose Application Insights pino transport
+ * Compose transport to write google cloud structured log
  * @param {import('types').StructuredTransformationConfig} opts - transport options
- * @param {typeof StructuredTransformation} [Transformation] - optional Telemetry transformation stream
+ * @param {typeof StructuredTransformation|typeof Transform} [Transformation] - optional structured transformation stream
  * @returns {ReturnType<typeof import('pino-abstract-transport')>}
  */
 export default function compose(opts, Transformation = StructuredTransformation) {
