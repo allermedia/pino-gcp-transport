@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## [0.0.4] - 2025-04-07
+
+- type: make flags optional for `getTraceHeadersAsObject` as well
+
 ## [0.0.3] - 2025-04-03
 
 - map error stack to textPayload

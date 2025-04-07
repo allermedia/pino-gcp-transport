@@ -43,7 +43,7 @@ export function getTraceHeaders(flags = 0) {
 
 /**
  * Get trace headers as object
- * @param {number} flags trace flags
+ * @param {number} [flags] optional trace flags
  * @returns {Record<string, string>}
  */
 export function getTraceHeadersAsObject(flags) {

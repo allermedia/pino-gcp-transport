@@ -55,9 +55,9 @@ declare module '@aller/pino-gcp-transport' {
 	export function getTraceHeaders(flags?: number): Map<string, string>;
 	/**
 	 * Get trace headers as object
-	 * @param flags trace flags
+	 * @param flags optional trace flags
 	 * */
-	export function getTraceHeadersAsObject(flags: number): Record<string, string>;
+	export function getTraceHeadersAsObject(flags?: number): Record<string, string>;
 	/**
 	 * Get tracing for logger suitable for mixin
 	 * @param projectId google project id required to build the logging trace id key
@@ -209,9 +209,9 @@ declare module '@aller/pino-gcp-transport/tracing' {
 	export function getTraceHeaders(flags?: number): Map<string, string>;
 	/**
 	 * Get trace headers as object
-	 * @param flags trace flags
+	 * @param flags optional trace flags
 	 * */
-	export function getTraceHeadersAsObject(flags: number): Record<string, string>;
+	export function getTraceHeadersAsObject(flags?: number): Record<string, string>;
 	/**
 	 * Get tracing for logger suitable for mixin
 	 * @param projectId google project id required to build the logging trace id key
