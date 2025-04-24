@@ -67,11 +67,11 @@ declare module '@aller/pino-gcp-transport' {
 	/**
 	 * Express trace id from header
 	 * */
-	export function getTraceIdFromHeader(req: import("express").Request): {
-		traceId: string;
+	export function getTraceIdFromHeader(req: import("express").Request | import("fastify").FastifyRequest): {
+		traceId: any;
 		spanId: string;
 		fromHeader: string;
-		headerValue: string;
+		headerValue: string | string[];
 	} | {
 		traceId: string;
 		spanId: string;
@@ -82,6 +82,10 @@ declare module '@aller/pino-gcp-transport' {
 	 * Create express tracing middleware
 	 */
 	export function middleware(): (req: import("express").Request, _res: import("express").Response, next: import("express").NextFunction) => void;
+	/**
+	 * Create fastify hook
+	 */
+	export function fastifyHook(): (request: import("fastify").FastifyRequest, _reply: import("fastify").FastifyReply, done: import("fastify").DoneFuncWithErrOrRes) => void;
 	/**
 	 * Attach trace and span id handler
 	 * */
@@ -221,11 +225,11 @@ declare module '@aller/pino-gcp-transport/tracing' {
 	/**
 	 * Express trace id from header
 	 * */
-	export function getTraceIdFromHeader(req: import("express").Request): {
-		traceId: string;
+	export function getTraceIdFromHeader(req: import("express").Request | import("fastify").FastifyRequest): {
+		traceId: any;
 		spanId: string;
 		fromHeader: string;
-		headerValue: string;
+		headerValue: string | string[];
 	} | {
 		traceId: string;
 		spanId: string;
@@ -236,6 +240,10 @@ declare module '@aller/pino-gcp-transport/tracing' {
 	 * Create express tracing middleware
 	 */
 	export function middleware(): (req: import("express").Request, _res: import("express").Response, next: import("express").NextFunction) => void;
+	/**
+	 * Create fastify hook
+	 */
+	export function fastifyHook(): (request: import("fastify").FastifyRequest, _reply: import("fastify").FastifyReply, done: import("fastify").DoneFuncWithErrOrRes) => void;
 	/**
 	 * Attach trace and span id handler
 	 * */

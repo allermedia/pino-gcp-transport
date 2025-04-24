@@ -69,17 +69,19 @@ export function getLogTrace(projectId) {
 
 /**
  * Express trace id from header
- * @param {import('express').Request} req
+ * @param {import('express').Request|import('fastify').FastifyRequest} req
  * @returns
  */
 export function getTraceIdFromHeader(req) {
   let traceHeader;
   const spanId = randomBytes(8).toString('hex');
 
-  if ((traceHeader = req.get(TRACEPARENT_HEADER_KEY))) {
+  if ((traceHeader = req.headers[TRACEPARENT_HEADER_KEY])) {
+    // @ts-ignore
     const [, traceId] = traceHeader.split('-');
     return { traceId, spanId, fromHeader: TRACEPARENT_HEADER_KEY, headerValue: traceHeader };
-  } else if ((traceHeader = req.get(X_HEADER_KEY))) {
+  } else if ((traceHeader = req.headers[X_HEADER_KEY])) {
+    // @ts-ignore
     const [traceId] = traceHeader.split('/');
     return { traceId, spanId, fromHeader: X_HEADER_KEY, headerValue: traceHeader };
   }
@@ -98,14 +100,36 @@ export function middleware() {
    * @param {import('express').NextFunction} next
    */
   return function tracingMiddleware(req, _res, next) {
-    const tracing = getTraceIdFromHeader(req);
-
-    store.run(new Map(), () => {
-      store.getStore().set(TRACE_ID_KEY, tracing.traceId);
-      store.getStore().set(SPAN_ID_KEY, tracing.spanId);
-      next();
-    });
+    storeTracing(getTraceIdFromHeader(req), next);
   };
+}
+
+/**
+ * Create fastify hook
+ */
+export function fastifyHook() {
+  /**
+   * Fastify middleware to extract trace header
+   * @param {import('fastify').FastifyRequest} request
+   * @param {import('fastify').FastifyReply} _reply
+   * @param {import('fastify').DoneFuncWithErrOrRes} done
+   */
+  return function tracingMiddleware(request, _reply, done) {
+    storeTracing(getTraceIdFromHeader(request), done);
+  };
+}
+
+/**
+ * Store tracing information
+ * @param {{traceId:string, spanId:string}} tracing
+ * @param {CallableFunction} callback
+ */
+function storeTracing({ traceId, spanId }, callback) {
+  store.run(new Map(), () => {
+    store.getStore().set(TRACE_ID_KEY, traceId);
+    store.getStore().set(SPAN_ID_KEY, spanId);
+    callback();
+  });
 }
 
 /**
@@ -116,10 +140,7 @@ export function middleware() {
  */
 export function attachTraceIdHandler(handler, traceId, spanId) {
   return new Promise((resolve, reject) => {
-    store.run(new Map(), async () => {
-      store.getStore().set(TRACE_ID_KEY, traceId || randomBytes(16).toString('hex'));
-      store.getStore().set(SPAN_ID_KEY, spanId);
-
+    storeTracing({ traceId: traceId || randomBytes(16).toString('hex'), spanId }, async () => {
       try {
         const res = await handler();
         resolve(res);

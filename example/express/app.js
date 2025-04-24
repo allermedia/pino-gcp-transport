@@ -3,7 +3,7 @@ import { fileURLToPath } from 'node:url';
 import express from 'express';
 import { middleware, getTraceHeadersAsObject } from '@aller/pino-gcp-transport';
 
-import logger from './logger.js';
+import logger from '../logger.js';
 
 const isMainModule = process.argv[1] === fileURLToPath(import.meta.url);
 
@@ -11,19 +11,15 @@ const app = express();
 
 app.use(middleware());
 
-app.get('/downstream', async (req, res, next) => {
-  try {
-    logger.debug('foo');
-    await fetch('https://example.com', {
-      method: 'GET',
-      headers: {
-        ...getTraceHeadersAsObject(req.query.flags ? Number(req.query.flags) : undefined),
-      },
-    });
-    res.send({});
-  } catch (err) {
-    next(err);
-  }
+app.get('/downstream', async (req, res) => {
+  logger.debug('foo');
+  await fetch('https://example.com', {
+    method: 'GET',
+    headers: {
+      ...getTraceHeadersAsObject(req.query.flags ? Number(req.query.flags) : undefined),
+    },
+  });
+  res.send({});
 });
 
 app.use('/log/request', (req, res) => {

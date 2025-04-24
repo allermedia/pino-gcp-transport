@@ -8,6 +8,27 @@ Convert stdout logging to structured json suitable for google cloud logging.
 
 Exported as ESM and commonjs.
 
+- [`middleware()`](#middleware) Express middleware
+- [`fastifyHook()`](#fastifyhook) Fastify hook
+- [`compose([options[, Transformation = StructuredTransformation]])`](#composeoptions-structuredtransformation)
+
+### `middleware()`
+
+Function to create express middleware that collects Opentelemetry headers if any.
+
+### `fastifyHook()`
+
+Function to create fastify hook that collects Opentelemetry headers if any.
+
+```javascript
+import fastify from 'fastify';
+import { fastifyHook } from '@aller/pino-gcp-transport';
+
+const app = fastify();
+
+app.addHook('onRequest', fastifyHook());
+```
+
 ### `compose([options[, Transformation = StructuredTransformation]])`
 
 Compose transport to get structured log. Default and named export.
@@ -86,6 +107,8 @@ Same as [`getTraceHeaders`](#gettraceheadersflags--0) but returns object.
 
 ## Setup example
 
+### Express middleware
+
 ```javascript
 import pino from 'pino';
 import express from 'express';
@@ -139,6 +162,63 @@ app.use((err, _req, res, next) => {
 
 // For testing
 await request(app).get('/log/request').expect(200);
+```
+
+### Fastify hook
+
+```javascript
+import pino from 'pino';
+import fastify from 'fastify';
+
+import compose, { fastifyHook, getLogTrace, getTraceHeadersAsObject } from '@aller/pino-gcp-transport';
+
+const logOptions = {
+  level: 'trace',
+  mixin() {
+    return { ...getLogTrace('aller-project-1') };
+  },
+};
+
+const logger = pino(logOptions, compose());
+
+const app = fastify({
+  logger: logOptions,
+  logInstance: logger,
+});
+
+app.addHook('onRequest', fastifyHook());
+
+app.get('/', (request, reply) => {
+  request.log.info('hello world');
+  reply.send({ hello: 'world' });
+});
+
+app.get('/downstream', async (request, reply) => {
+  logger.debug('foo');
+  const res = await fetch('https://example.com', {
+    method: 'GET',
+    headers: {
+      ...getTraceHeadersAsObject(request.query.flags ? Number(request.query.flags) : undefined),
+    },
+  });
+
+  logger.info({ ok: res.ok }, 'bar');
+
+  reply.send({});
+});
+
+app.get('/log/request', (request, reply) => {
+  logger.info(request, 'foo');
+  reply.send({});
+});
+
+app.get('/log/error', (request, reply) => {
+  logger.error(new Error(request.query.message ?? 'expected'));
+  reply.send({});
+});
+
+// For testing
+await app.inject().get('/log/request');
 ```
 
 ## Logger example

@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## [0.1.4] - 2025-04-24
+
+- support fastify hook
+
 ## [0.0.4] - 2025-04-07
 
 - type: make flags optional for `getTraceHeadersAsObject` as well

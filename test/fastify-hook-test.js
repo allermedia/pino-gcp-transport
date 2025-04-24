@@ -1,15 +1,14 @@
 import { Writable } from 'node:stream';
 
-import express from 'express';
-import request from 'supertest';
+import fastify from 'fastify';
 import nock from 'nock';
 import pino from 'pino';
 
 import compose from '../src/index.js';
-import { middleware, getTraceHeadersAsObject, getLogTrace } from '../src/tracing.js';
+import { fastifyHook, getTraceHeadersAsObject, getLogTrace } from '../src/tracing.js';
 
-describe('middleware', () => {
-  /** @type {express.Application} */
+describe('fastify', () => {
+  /** @type {fastify.Application} */
   let app;
   /** @type {pino.Logger} */
   let logger;
@@ -35,8 +34,8 @@ describe('middleware', () => {
       compose({ projectId: 'aller-project-1', destination })
     );
 
-    app = express();
-    app.use(middleware());
+    app = fastify();
+    app.addHook('onRequest', fastifyHook());
 
     app.get('/downstream', async (req, res, next) => {
       try {
@@ -53,21 +52,18 @@ describe('middleware', () => {
       }
     });
 
-    app.use('/log/request', (req, res) => {
-      logger.info(req);
-      res.send({});
+    app.route({
+      method: ['GET', 'POST'],
+      url: '/log/request',
+      handler: (req, res) => {
+        logger.info(req);
+        res.send({});
+      },
     });
 
     app.get('/log/error', (req, res) => {
       logger.error(new Error(req.query.message ?? 'expected'));
       res.send({});
-    });
-
-    app.use((err, _req, res, next) => {
-      if (!(err instanceof Error)) return next();
-
-      logger.error(err);
-      res.status(500).send({ message: err.message });
     });
   });
 
@@ -86,7 +82,7 @@ describe('middleware', () => {
           })
       );
 
-      await request(app).get('/downstream').expect(200);
+      await app.inject({ method: 'GET', path: '/downstream' });
 
       const { headers } = await downstreamCall;
 
@@ -104,7 +100,7 @@ describe('middleware', () => {
           })
       );
 
-      await request(app).get('/downstream').set('X-Cloud-Trace-Context', 'traceid/spanid;op=0').expect(200);
+      await app.inject().get('/downstream').headers({ 'X-Cloud-Trace-Context': 'traceid/spanid;op=0' });
 
       const { headers } = await downstreamCall;
 
@@ -127,13 +123,35 @@ describe('middleware', () => {
           })
       );
 
-      await request(app).get('/downstream').set('traceparent', '00-traceid-spanid-00').expect(200);
+      await app.inject().get('/downstream').headers({ traceparent: '00-traceid-spanid-00' });
 
       const { headers } = await downstreamCall;
 
       expect(headers)
         .to.have.property('traceparent')
         .that.match(/00-traceid-[0-9a-f]{16}-00/);
+    });
+
+    it('request with double traceparents header forwards the first trace header to downstream calls', async () => {
+      const downstreamCall = new Promise((resolve) =>
+        nock('https://example.local')
+          .get('/')
+          .reply(function reply() {
+            resolve({ headers: this.req.headers });
+            return [200, {}];
+          })
+      );
+
+      await app
+        .inject()
+        .get('/downstream')
+        .headers({ traceparent: ['00-traceid1-spanid1-00', '00-traceid2-spanid2-00'] });
+
+      const { headers } = await downstreamCall;
+
+      expect(headers)
+        .to.have.property('traceparent')
+        .that.match(/00-traceid1-[0-9a-f]{16}-00/);
     });
 
     it('settings trace flags to 1 forwards trace headers with flags to downstream calls', async () => {
@@ -146,7 +164,7 @@ describe('middleware', () => {
           })
       );
 
-      await request(app).get('/downstream').set('traceparent', '00-traceid-spanid-00').query({ flags: '1' }).expect(200);
+      await app.inject().get('/downstream').headers({ traceparent: '00-traceid-spanid-00' }).query({ flags: '1' });
 
       const { headers } = await downstreamCall;
 
@@ -165,7 +183,7 @@ describe('middleware', () => {
           })
       );
 
-      await request(app).get('/downstream').set('traceparent', '00-traceid-spanid-00').query({ flags: 17 }).expect(200);
+      await app.inject().get('/downstream').headers({ traceparent: '00-traceid-spanid-00' }).query({ flags: 17 });
 
       const { headers } = await downstreamCall;
 
@@ -184,7 +202,7 @@ describe('middleware', () => {
           })
       );
 
-      await request(app).get('/downstream').set('traceparent', '00-traceid-spanid-00').query({ flags: '256' }).expect(200);
+      await app.inject().get('/downstream').headers({ traceparent: '00-traceid-spanid-00' }).query({ flags: '256' });
 
       const { headers } = await downstreamCall;
 
@@ -198,33 +216,50 @@ describe('middleware', () => {
     it('logs calls with trace keys', async () => {
       nock('https://example.local').get('/').reply(200, {});
 
-      await request(app).get('/downstream').set('traceparent', '00-traceid-spanid-00').query({ flags: '256' }).expect(200);
+      await app.inject().get('/downstream').headers({ traceparent: '00-traceid-spanid-00' }).query({ flags: '256' });
 
       const msg = logMessages.pop();
 
       expect(msg).to.deep.include({ message: 'foo', 'logging.googleapis.com/trace': 'projects/aller-project-1/traces/traceid' });
     });
 
-    it('logs calls with trace keys regardless of trace header casing', async () => {
+    it('logs calls with trace keys disregaring trace header casing', async () => {
       nock('https://example.local').get('/').reply(200, {});
 
-      await request(app).get('/downstream').set('TraceParent', '00-traceid-spanid-00').query({ flags: '256' }).expect(200);
+      await app.inject().get('/downstream').headers({ TracePArent: '00-traceid-spanid-00' }).query({ flags: '256' });
 
       const msg = logMessages.pop();
 
       expect(msg).to.deep.include({ message: 'foo', 'logging.googleapis.com/trace': 'projects/aller-project-1/traces/traceid' });
+    });
+
+    it('multiple trace headers logs first header', async () => {
+      nock('https://example.local').get('/').reply(200, {});
+
+      await app
+        .inject()
+        .get('/log/request')
+        .headers({
+          'x-forwarded-proto': 'https',
+          'x-forwarded-host': 'aller.local',
+          'user-agent': 'curl',
+          traceparent: ['00-traceid1-spanid1-00', '00-traceid2-spanid2-00'],
+        });
+
+      const logMsg = logMessages.pop();
+
+      expect(logMsg).to.have.property('logging.googleapis.com/trace', 'projects/aller-project-1/traces/traceid1');
     });
 
     it('logging request maps request to logging httpRequest', async () => {
       nock('https://example.local').get('/').reply(200, {});
 
-      await request(app)
-        .get('/log/request')
-        .set('x-forwarded-proto', 'https')
-        .set('x-forwarded-host', 'aller.local')
-        .set('user-agent', 'curl')
-        .set('traceparent', '00-traceid-spanid-00')
-        .expect(200);
+      await app.inject().get('/log/request').headers({
+        'x-forwarded-proto': 'https',
+        'x-forwarded-host': 'aller.local',
+        'user-agent': 'curl',
+        traceparent: '00-traceid-spanid-00',
+      });
 
       const logMsg = logMessages.pop();
 
@@ -242,7 +277,7 @@ describe('middleware', () => {
     it('logging request maps request method POST to logging httpRequest', async () => {
       nock('https://example.local').get('/').reply(200, {});
 
-      await request(app).post('/log/request').expect(200);
+      await app.inject().post('/log/request');
 
       const logMsg = logMessages.pop();
 
@@ -255,7 +290,7 @@ describe('middleware', () => {
     it('logging request without message composes message from request', async () => {
       nock('https://example.local').get('/').reply(200, {});
 
-      await request(app).post('/log/request').expect(200);
+      await app.inject().post('/log/request');
 
       expect(logMessages.pop()).to.have.property('message', 'POST /log/request');
     });
@@ -263,7 +298,7 @@ describe('middleware', () => {
     it('logging error maps error message to message', async () => {
       nock('https://example.local').get('/').reply(200, {});
 
-      await request(app).get('/log/error').query({ message: 'unexpected' }).expect(200);
+      await app.inject().get('/log/error').query({ message: 'unexpected' });
 
       const logMsg = logMessages.pop();
 
@@ -273,7 +308,7 @@ describe('middleware', () => {
     it('logging error maps error stack sourceLocation', async () => {
       nock('https://example.local').get('/').reply(200, {});
 
-      await request(app).get('/log/error').query({ message: 'unexpected' }).expect(200);
+      await app.inject().get('/log/error').query({ message: 'unexpected' });
 
       const logMsg = logMessages.pop();
 
