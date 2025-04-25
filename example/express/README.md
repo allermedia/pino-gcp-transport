@@ -4,5 +4,5 @@
 
 ```sh
 npm i
-node example/app.js
+node example/express/app.js
 ```

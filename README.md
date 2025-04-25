@@ -1,6 +1,6 @@
 # pino-gcp-transport
 
-Convert stdout logging to structured json suitable for google cloud logging.
+Convert pino stdout logging to structured json suitable for google cloud logging.
 
 [![Build](https://github.com/allermedia/pino-gcp-transport/actions/workflows/build.yaml/badge.svg)](https://github.com/allermedia/pino-gcp-transport/actions/workflows/build.yaml)
 
@@ -8,26 +8,12 @@ Convert stdout logging to structured json suitable for google cloud logging.
 
 Exported as ESM and commonjs.
 
-- [`middleware()`](#middleware) Express middleware
-- [`fastifyHook()`](#fastifyhook) Fastify hook
-- [`compose([options[, Transformation = StructuredTransformation]])`](#composeoptions-structuredtransformation)
-
-### `middleware()`
-
-Function to create express middleware that collects Opentelemetry headers if any.
-
-### `fastifyHook()`
-
-Function to create fastify hook that collects Opentelemetry headers if any.
-
-```javascript
-import fastify from 'fastify';
-import { fastifyHook } from '@aller/pino-gcp-transport';
-
-const app = fastify();
-
-app.addHook('onRequest', fastifyHook());
-```
+- [`compose()`](#composeoptions-transformation--structuredtransformation) Compose transport to get google structured log
+- [`middleware()`](#middleware) Express middleware to collect tracing
+- [`fastifyHook()`](#fastifyhook) Fastify hook to collect tracing
+- [`getTraceHeadersAsObject()`](#gettraceheadersasobjectflags--0) Get collected tracing headers as object to forward to downstream calls
+- [`logger.js`](#logger-example) Logger example
+- [Examples](/example/README.md) Middleware and logging examples
 
 ### `compose([options[, Transformation = StructuredTransformation]])`
 
@@ -43,7 +29,45 @@ Compose transport to get structured log. Default and named export.
 - `Transformation`: optional transformation stream type, defaults to builtin `StructuredTransformation` stream type, will be called with new. Can be used to override with extended StructuredTransformation type
 
 ```javascript
-import compose, { StructuredTransformation } from '@aller/pino-gcp-transport';
+import pino from 'pino';
+import compose, { getLogTrace } from '@aller/pino-gcp-transport';
+
+export const logger = pino(
+  {
+    mixin() {
+      return { ...getLogTrace(process.env.MYAPP_projectId) };
+    },
+  },
+  compose({
+    ignoreKeys: ['message', 'hostname', 'pid', 'level', 'time', 'msg'],
+  })
+);
+```
+
+### `middleware()`
+
+Function to create express middleware that collects Opentelemetry headers if any.
+
+```javascript
+import express from 'express';
+import { middleware } from '@aller/pino-gcp-transport';
+
+const app = express();
+
+app.use(middleware());
+```
+
+### `fastifyHook()`
+
+Function to create fastify hook that collects Opentelemetry headers if any.
+
+```javascript
+import fastify from 'fastify';
+import { fastifyHook } from '@aller/pino-gcp-transport';
+
+const app = fastify();
+
+app.addHook('onRequest', fastifyHook());
 ```
 
 ### `getLogTrace(projectId)`
@@ -82,8 +106,8 @@ Used to forward tracing to donwstream calls. Named export.
 Map with trace headers `traceparent` and legacy `x-cloud-trace-context`.
 
 ```javascript
-import compose, { getTraceHeaders, getLogTrace } from '@aller/pino-gcp-transport';
 import pino from 'pino';
+import compose, { getTraceHeaders, getLogTrace } from '@aller/pino-gcp-transport';
 
 export const logger = pino(
   {

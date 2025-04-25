@@ -2,7 +2,11 @@
 
 ## Unreleased
 
-## [0.1.4] - 2025-04-24
+## [0.1.1] - 2025-04-25
+
+- fix readme
+
+## [0.1.0] - 2025-04-24
 
 - support fastify hook
 
