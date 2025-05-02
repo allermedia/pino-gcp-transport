@@ -73,7 +73,7 @@
     "prettier": "^3.2.5",
     "rollup": "^4.38.0",
     "supertest": "^7.1.0",
-    "texample": "^0.0.7"
+    "texample": "^0.0.8"
   },
   "peerDependencies": {
     "pino-abstract-transport": "2.x",

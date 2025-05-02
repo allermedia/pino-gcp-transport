@@ -24,6 +24,7 @@ export const SEVERITY_EMERGENCY = 'EMERGENCY';
 
 export const TRACE_ID_KEY = 'logging.googleapis.com/trace';
 export const SPAN_ID_KEY = 'logging.googleapis.com/spanId';
+export const SAMPLED_TRACE_KEY = 'logging.googleapis.com/trace_sampled';
 export const SOURCELOCATION_KEY = 'logging.googleapis.com/sourceLocation';
 
 export const STACK_PATTERN =

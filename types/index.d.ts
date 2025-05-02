@@ -48,6 +48,7 @@ declare module '@aller/pino-gcp-transport' {
   }
 	export function getTraceId(): any;
 	export function getSpanId(): any;
+	export function getTracingFlags(): any;
 	/**
 	 * Get trace headers to forward downstream
 	 * @param flags 1 = trace is sampled seems to be the only flag that is supported
@@ -63,18 +64,20 @@ declare module '@aller/pino-gcp-transport' {
 	 * @param projectId google project id required to build the logging trace id key
 	 * @returns object with trace logging parameters
 	 */
-	export function getLogTrace(projectId: string): Record<string, string> | undefined;
+	export function getLogTrace(projectId: string): Record<string, any> | undefined;
 	/**
 	 * Express trace id from header
 	 * */
 	export function getTraceIdFromHeader(req: import("express").Request | import("fastify").FastifyRequest): {
 		traceId: any;
 		spanId: string;
+		flags: number;
 		fromHeader: string;
 		headerValue: string | string[];
 	} | {
 		traceId: string;
 		spanId: string;
+		flags: number;
 		fromHeader: string;
 		headerValue?: undefined;
 	};
@@ -88,12 +91,48 @@ declare module '@aller/pino-gcp-transport' {
 	export function fastifyHook(): (request: import("fastify").FastifyRequest, _reply: import("fastify").FastifyReply, done: import("fastify").DoneFuncWithErrOrRes) => void;
 	/**
 	 * Attach trace and span id handler
-	 * */
-	export function attachTraceIdHandler(handler: (...args: any[]) => Promise<any>, traceId: string, spanId: string): Promise<any>;
+	 * @param flags tracing flags
+	 */
+	export function attachTraceIdHandler(handler: (...args: any[]) => Promise<any>, traceId: string, spanId: string, flags?: number): Promise<any>;
+	/**
+	 * Create new trace id
+	 * @returns 16 random bytes as hex
+	 */
+	export function createTraceId(): string;
+	/**
+	 * Create new span id
+	 * @returns 8 random bytes as hex string
+	 */
+	export function createSpanId(): string;
 	/** Recommended trace header in format "00-traceid-spanid-01" */
 	export const TRACEPARENT_HEADER_KEY: "traceparent";
 	/** Legacy header in format "traceid/spanid;op=0" */
 	export const X_HEADER_KEY: "x-cloud-trace-context";
+	export const TRACING_FLAGS_KEY: "tracingFlags";
+	/**
+	 * Create span context
+	 */
+	export class SpanContext {
+		/**
+		 * @param traceId parent trace id if any
+		 * @param spanId parent span id if any
+		 * @param flags 1 = sampled, defaults to 0
+		 */
+		constructor(traceId?: string, spanId?: string, flags?: number);
+		traceId: any;
+		spanId: string | undefined;
+		flags: number;
+		/**
+		 * Run function in new span context
+		 * @param  args arguments passed to handler
+		 */
+		runInNewSpanContext(fn: (...args: any) => Promise<any>, ...args: any[]): any;
+		/**
+		 * Run function in current span context
+		 * @param  args arguments passed to handler
+		 */
+		runInCurrentSpanContext(fn: (...args: any) => Promise<any>, ...args: any[]): Promise<any>;
+	}
 	/** @type {string} Debug or trace information. */
 	export const SEVERITY_DEBUG: string;
 	/** @type {string} Routine information, such as ongoing status or performance. */
@@ -112,6 +151,7 @@ declare module '@aller/pino-gcp-transport' {
 	export const SEVERITY_EMERGENCY: string;
 	export const TRACE_ID_KEY: "logging.googleapis.com/trace";
 	export const SPAN_ID_KEY: "logging.googleapis.com/spanId";
+	export const SAMPLED_TRACE_KEY: "logging.googleapis.com/trace_sampled";
 	export const SOURCELOCATION_KEY: "logging.googleapis.com/sourceLocation";
 	export const STACK_PATTERN: RegExp;
   /*!
@@ -206,6 +246,7 @@ declare module '@aller/pino-gcp-transport' {
 declare module '@aller/pino-gcp-transport/tracing' {
 	export function getTraceId(): any;
 	export function getSpanId(): any;
+	export function getTracingFlags(): any;
 	/**
 	 * Get trace headers to forward downstream
 	 * @param flags 1 = trace is sampled seems to be the only flag that is supported
@@ -221,18 +262,20 @@ declare module '@aller/pino-gcp-transport/tracing' {
 	 * @param projectId google project id required to build the logging trace id key
 	 * @returns object with trace logging parameters
 	 */
-	export function getLogTrace(projectId: string): Record<string, string> | undefined;
+	export function getLogTrace(projectId: string): Record<string, any> | undefined;
 	/**
 	 * Express trace id from header
 	 * */
 	export function getTraceIdFromHeader(req: import("express").Request | import("fastify").FastifyRequest): {
 		traceId: any;
 		spanId: string;
+		flags: number;
 		fromHeader: string;
 		headerValue: string | string[];
 	} | {
 		traceId: string;
 		spanId: string;
+		flags: number;
 		fromHeader: string;
 		headerValue?: undefined;
 	};
@@ -246,12 +289,48 @@ declare module '@aller/pino-gcp-transport/tracing' {
 	export function fastifyHook(): (request: import("fastify").FastifyRequest, _reply: import("fastify").FastifyReply, done: import("fastify").DoneFuncWithErrOrRes) => void;
 	/**
 	 * Attach trace and span id handler
-	 * */
-	export function attachTraceIdHandler(handler: (...args: any[]) => Promise<any>, traceId: string, spanId: string): Promise<any>;
+	 * @param flags tracing flags
+	 */
+	export function attachTraceIdHandler(handler: (...args: any[]) => Promise<any>, traceId: string, spanId: string, flags?: number): Promise<any>;
+	/**
+	 * Create new trace id
+	 * @returns 16 random bytes as hex
+	 */
+	export function createTraceId(): string;
+	/**
+	 * Create new span id
+	 * @returns 8 random bytes as hex string
+	 */
+	export function createSpanId(): string;
 	/** Recommended trace header in format "00-traceid-spanid-01" */
 	export const TRACEPARENT_HEADER_KEY: "traceparent";
 	/** Legacy header in format "traceid/spanid;op=0" */
 	export const X_HEADER_KEY: "x-cloud-trace-context";
+	export const TRACING_FLAGS_KEY: "tracingFlags";
+	/**
+	 * Create span context
+	 */
+	export class SpanContext {
+		/**
+		 * @param traceId parent trace id if any
+		 * @param spanId parent span id if any
+		 * @param flags 1 = sampled, defaults to 0
+		 */
+		constructor(traceId?: string, spanId?: string, flags?: number);
+		traceId: any;
+		spanId: string | undefined;
+		flags: number;
+		/**
+		 * Run function in new span context
+		 * @param  args arguments passed to handler
+		 */
+		runInNewSpanContext(fn: (...args: any) => Promise<any>, ...args: any[]): any;
+		/**
+		 * Run function in current span context
+		 * @param  args arguments passed to handler
+		 */
+		runInCurrentSpanContext(fn: (...args: any) => Promise<any>, ...args: any[]): Promise<any>;
+	}
 
 	export {};
 }

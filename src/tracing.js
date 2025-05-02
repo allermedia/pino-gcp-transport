@@ -1,7 +1,7 @@
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { randomBytes } from 'node:crypto';
 
-import { TRACE_ID_KEY, SPAN_ID_KEY } from './constants.js';
+import { TRACE_ID_KEY, SPAN_ID_KEY, SAMPLED_TRACE_KEY } from './constants.js';
 
 const store = new AsyncLocalStorage();
 
@@ -11,6 +11,8 @@ export const TRACEPARENT_HEADER_KEY = 'traceparent';
 /** Legacy header in format "traceid/spanid;op=0" */
 export const X_HEADER_KEY = 'x-cloud-trace-context';
 
+export const TRACING_FLAGS_KEY = 'tracingFlags';
+
 export function getTraceId() {
   return store.getStore()?.get(TRACE_ID_KEY);
 }
@@ -19,15 +21,21 @@ export function getSpanId() {
   return store.getStore()?.get(SPAN_ID_KEY);
 }
 
+export function getTracingFlags() {
+  return store.getStore()?.get(TRACING_FLAGS_KEY);
+}
+
 /**
  * Get trace headers to forward downstream
  * @param {number} [flags] 1 = trace is sampled seems to be the only flag that is supported
  */
-export function getTraceHeaders(flags = 0) {
+export function getTraceHeaders(flags) {
+  if (flags === undefined || flags === null) {
+    flags = getTracingFlags();
+  }
   if (typeof flags !== 'number' || flags > 255 || flags < 0) {
     flags = 0;
   }
-
   /** @type {Map<string, string>} */
   const headers = new Map();
 
@@ -53,7 +61,7 @@ export function getTraceHeadersAsObject(flags) {
 /**
  * Get tracing for logger suitable for mixin
  * @param {string} projectId google project id required to build the logging trace id key
- * @returns {Record<string, string>|undefined} object with trace logging parameters
+ * @returns {Record<string, any>|undefined} object with trace logging parameters
  */
 export function getLogTrace(projectId) {
   if (typeof projectId !== 'string') return;
@@ -64,29 +72,37 @@ export function getLogTrace(projectId) {
   return {
     [TRACE_ID_KEY]: `projects/${projectId.trim()}/traces/${traceId}`,
     [SPAN_ID_KEY]: store.getStore().get(SPAN_ID_KEY),
+    [SAMPLED_TRACE_KEY]: (store.getStore().get(TRACING_FLAGS_KEY) & 1) === 1,
   };
 }
 
 /**
  * Express trace id from header
  * @param {import('express').Request|import('fastify').FastifyRequest} req
- * @returns
  */
 export function getTraceIdFromHeader(req) {
   let traceHeader;
-  const spanId = randomBytes(8).toString('hex');
+  const spanId = createSpanId();
+  let flags = 0;
 
   if ((traceHeader = req.headers[TRACEPARENT_HEADER_KEY])) {
     // @ts-ignore
-    const [, traceId] = traceHeader.split('-');
-    return { traceId, spanId, fromHeader: TRACEPARENT_HEADER_KEY, headerValue: traceHeader };
+    const [, traceId, , flagsStr] = traceHeader.split('-');
+    flags = parseInt(flagsStr, 16);
+
+    return { traceId, spanId, flags, fromHeader: TRACEPARENT_HEADER_KEY, headerValue: traceHeader };
   } else if ((traceHeader = req.headers[X_HEADER_KEY])) {
     // @ts-ignore
-    const [traceId] = traceHeader.split('/');
-    return { traceId, spanId, fromHeader: X_HEADER_KEY, headerValue: traceHeader };
+    const [traceId, spanOp] = traceHeader.split('/');
+    if (spanOp) {
+      const [, flagsStr] = spanOp.split(';op=');
+      const flagsNo = flagsStr ? parseInt(flagsStr, 16) : 0;
+      if (!isNaN(flagsNo)) flags = flagsNo;
+    }
+    return { traceId, spanId, flags, fromHeader: X_HEADER_KEY, headerValue: traceHeader };
   }
 
-  return { traceId: randomBytes(16).toString('hex'), spanId, fromHeader: X_HEADER_KEY };
+  return { traceId: createTraceId(), spanId, flags, fromHeader: X_HEADER_KEY };
 }
 
 /**
@@ -121,13 +137,14 @@ export function fastifyHook() {
 
 /**
  * Store tracing information
- * @param {{traceId:string, spanId:string}} tracing
+ * @param {{traceId:string, spanId:string, flags?:number}} tracing
  * @param {CallableFunction} callback
  */
-function storeTracing({ traceId, spanId }, callback) {
+function storeTracing({ traceId, spanId, flags = 0 }, callback) {
   store.run(new Map(), () => {
     store.getStore().set(TRACE_ID_KEY, traceId);
     store.getStore().set(SPAN_ID_KEY, spanId);
+    store.getStore().set(TRACING_FLAGS_KEY, flags);
     callback();
   });
 }
@@ -137,16 +154,76 @@ function storeTracing({ traceId, spanId }, callback) {
  * @param {(...args:any[]) => Promise<any>} handler
  * @param {string} traceId
  * @param {string} spanId
+ * @param {number} [flags] tracing flags
  */
-export function attachTraceIdHandler(handler, traceId, spanId) {
-  return new Promise((resolve, reject) => {
-    storeTracing({ traceId: traceId || randomBytes(16).toString('hex'), spanId }, async () => {
-      try {
-        const res = await handler();
-        resolve(res);
-      } catch (err) {
-        reject(err);
-      }
+export function attachTraceIdHandler(handler, traceId, spanId, flags = 0) {
+  return new SpanContext(traceId, spanId, flags).runInCurrentSpanContext(handler);
+}
+
+/**
+ * Create span context
+ */
+export class SpanContext {
+  /**
+   * @param {string} [traceId] parent trace id if any
+   * @param {string} [spanId] parent span id if any
+   * @param {number} [flags] 1 = sampled, defaults to 0
+   */
+  constructor(traceId, spanId, flags) {
+    if (traceId) {
+      this.traceId = traceId;
+      this.spanId = spanId;
+    } else {
+      this.traceId = getTraceId() || createTraceId();
+    }
+    this.flags = flags ?? 0;
+  }
+  /**
+   * Run function in new span context
+   * @param {(...args:any) => Promise<any>} fn
+   * @param  {...any} args arguments passed to handler
+   */
+  runInNewSpanContext(fn, ...args) {
+    // @ts-ignore
+    return new this.constructor(this.traceId, createSpanId(), this.flags).runInCurrentSpanContext(fn, ...args);
+  }
+  /**
+   * Run function in current span context
+   * @param {(...args:any) => Promise<any>} fn
+   * @param  {...any} args arguments passed to handler
+   */
+  runInCurrentSpanContext(fn, ...args) {
+    let spanId;
+    if (!(spanId = this.spanId)) {
+      this.spanId = spanId = createSpanId();
+    }
+
+    return new Promise((resolve, reject) => {
+      // @ts-ignore
+      storeTracing({ traceId: this.traceId, spanId, flags: this.flags }, async () => {
+        try {
+          const res = await fn(...args);
+          resolve(res);
+        } catch (err) {
+          reject(err);
+        }
+      });
     });
-  });
+  }
+}
+
+/**
+ * Create new trace id
+ * @returns 16 random bytes as hex
+ */
+export function createTraceId() {
+  return randomBytes(16).toString('hex');
+}
+
+/**
+ * Create new span id
+ * @returns 8 random bytes as hex string
+ */
+export function createSpanId() {
+  return randomBytes(8).toString('hex');
 }

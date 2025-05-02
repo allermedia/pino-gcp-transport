@@ -7,7 +7,7 @@ import * as ck from 'chronokinesis';
 
 import { StructuredTransformation } from '../src/index.js';
 import { attachTraceIdHandler, getLogTrace } from '../src/tracing.js';
-import { SPAN_ID_KEY, TRACE_ID_KEY, STACK_PATTERN } from '../src/constants.js';
+import { SPAN_ID_KEY, TRACE_ID_KEY, SAMPLED_TRACE_KEY, STACK_PATTERN } from '../src/constants.js';
 
 describe('StructuredTransformation', () => {
   afterEach(ck.reset);
@@ -72,14 +72,55 @@ describe('StructuredTransformation', () => {
 
       logger.info({ bar: 'baz' }, 'foo');
 
-      expect(msgs[0]).to.deep.equal({
+      expect(msgs[0]).to.deep.include({
         message: 'foo',
         severity: 'INFO',
         timestamp: new Date(),
         bar: 'baz',
         [TRACE_ID_KEY]: 'projects/aller-auth-1/traces/abc-123',
+        [SAMPLED_TRACE_KEY]: false,
       });
     }, 'abc-123');
+  });
+
+  it('forwards tracing flags as sampled trace to destination', async () => {
+    await attachTraceIdHandler(
+      () => {
+        const transport = abstractTransport(
+          (source) => {
+            pipeline(source, new StructuredTransformation(null, { projectId: 'aller-auth-1' }), destination, () => {});
+          },
+          {
+            parse: 'lines',
+          }
+        );
+
+        const logger = pino(
+          {
+            mixin() {
+              return {
+                ...getLogTrace('aller-auth-1'),
+              };
+            },
+          },
+          transport
+        );
+
+        logger.info({ bar: 'baz' }, 'foo');
+
+        expect(msgs[0]).to.deep.include({
+          message: 'foo',
+          severity: 'INFO',
+          timestamp: new Date(),
+          bar: 'baz',
+          [TRACE_ID_KEY]: 'projects/aller-auth-1/traces/abc-123',
+          [SAMPLED_TRACE_KEY]: true,
+        });
+      },
+      'abc-123',
+      null,
+      1
+    );
   });
 
   it('forwards mixin of span id to destination', async () => {
@@ -115,6 +156,7 @@ describe('StructuredTransformation', () => {
           bar: 'baz',
           [TRACE_ID_KEY]: 'projects/aller-auth-1/traces/abc-123',
           [SPAN_ID_KEY]: '54321',
+          [SAMPLED_TRACE_KEY]: false,
         });
       },
       'abc-123',

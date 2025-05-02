@@ -25,6 +25,16 @@ describe('compose', () => {
   afterEach(ck.reset);
 
   describe('options', () => {
+    it('compose without options pipes to stdout', () => {
+      const transport = compose();
+
+      const logger = pino(transport);
+
+      logger.info('foo');
+
+      transport.destroy();
+    });
+
     it('compose with destination stream pipes to destination', () => {
       const transport = compose({ destination, projectId: 'aller.se/aip-auth' });
 

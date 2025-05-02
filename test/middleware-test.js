@@ -117,6 +117,98 @@ describe('middleware', () => {
         .that.match(/00-traceid-[0-9a-f]{16}-00$/);
     });
 
+    it('request with legacy sampled X-Cloud-Trace-Context header forwards trace headers to downstream calls', async () => {
+      const downstreamCall = new Promise((resolve) =>
+        nock('https://example.local')
+          .get('/')
+          .reply(function reply() {
+            resolve({ headers: this.req.headers });
+            return [200, {}];
+          })
+      );
+
+      await request(app).get('/downstream').set('X-Cloud-Trace-Context', 'sampledtraceid/spanid;op=1').expect(200);
+
+      const { headers } = await downstreamCall;
+
+      expect(headers)
+        .to.have.property('x-cloud-trace-context')
+        .that.match(/^sampledtraceid\/[0-9a-f]{16};op=1$/);
+
+      expect(headers)
+        .to.have.property('traceparent')
+        .that.match(/00-sampledtraceid-[0-9a-f]{16}-01$/);
+    });
+
+    it('request with legacy X-Cloud-Trace-Context without op flags sets op flags to 0', async () => {
+      const downstreamCall = new Promise((resolve) =>
+        nock('https://example.local')
+          .get('/')
+          .reply(function reply() {
+            resolve({ headers: this.req.headers });
+            return [200, {}];
+          })
+      );
+
+      await request(app).get('/downstream').set('X-Cloud-Trace-Context', 'sampledtraceid/spanid').expect(200);
+
+      const { headers } = await downstreamCall;
+
+      expect(headers)
+        .to.have.property('x-cloud-trace-context')
+        .that.match(/^sampledtraceid\/[0-9a-f]{16};op=0$/);
+
+      expect(headers)
+        .to.have.property('traceparent')
+        .that.match(/00-sampledtraceid-[0-9a-f]{16}-00$/);
+    });
+
+    it('request with legacy X-Cloud-Trace-Context with malformed flags sets op flags to 0', async () => {
+      const downstreamCall = new Promise((resolve) =>
+        nock('https://example.local')
+          .get('/')
+          .reply(function reply() {
+            resolve({ headers: this.req.headers });
+            return [200, {}];
+          })
+      );
+
+      await request(app).get('/downstream').set('X-Cloud-Trace-Context', 'sampledtraceid/spanid;pop=malformed').expect(200);
+
+      const { headers } = await downstreamCall;
+
+      expect(headers)
+        .to.have.property('x-cloud-trace-context')
+        .that.match(/^sampledtraceid\/[0-9a-f]{16};op=0$/);
+
+      expect(headers)
+        .to.have.property('traceparent')
+        .that.match(/00-sampledtraceid-[0-9a-f]{16}-00$/);
+    });
+
+    it('request with legacy X-Cloud-Trace-Context with NaN op sets flags to 0', async () => {
+      const downstreamCall = new Promise((resolve) =>
+        nock('https://example.local')
+          .get('/')
+          .reply(function reply() {
+            resolve({ headers: this.req.headers });
+            return [200, {}];
+          })
+      );
+
+      await request(app).get('/downstream').set('X-Cloud-Trace-Context', 'sampledtraceid/spanid;op=malformed').expect(200);
+
+      const { headers } = await downstreamCall;
+
+      expect(headers)
+        .to.have.property('x-cloud-trace-context')
+        .that.match(/^sampledtraceid\/[0-9a-f]{16};op=0$/);
+
+      expect(headers)
+        .to.have.property('traceparent')
+        .that.match(/00-sampledtraceid-[0-9a-f]{16}-00$/);
+    });
+
     it('request with traceparent header forwards trace headers to downstream calls', async () => {
       const downstreamCall = new Promise((resolve) =>
         nock('https://example.local')
@@ -153,6 +245,25 @@ describe('middleware', () => {
       expect(headers)
         .to.have.property('traceparent')
         .that.match(/00-traceid-[0-9a-f]{16}-01/);
+    });
+
+    it('sampled traceparent forwards sampled to downstream calls', async () => {
+      const downstreamCall = new Promise((resolve) =>
+        nock('https://example.local')
+          .get('/')
+          .reply(function reply() {
+            resolve({ headers: this.req.headers });
+            return [200, {}];
+          })
+      );
+
+      await request(app).get('/downstream').set('traceparent', '00-sampledtraceid-spanid-01').expect(200);
+
+      const { headers } = await downstreamCall;
+
+      expect(headers)
+        .to.have.property('traceparent')
+        .that.match(/00-sampledtraceid-[0-9a-f]{16}-01/);
     });
 
     it('settings trace flags to 16 forwards trace headers with flags to downstream calls', async () => {

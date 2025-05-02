@@ -1,4 +1,13 @@
-import { attachTraceIdHandler, getLogTrace, getSpanId, getTraceId } from '../src/tracing.js';
+import {
+  attachTraceIdHandler,
+  getLogTrace,
+  getSpanId,
+  getTraceId,
+  getTracingFlags,
+  SpanContext,
+  createTraceId,
+  createSpanId,
+} from '../src/tracing.js';
 
 describe('tracing', () => {
   it('getTraceId returns trace id', async () => {
@@ -61,5 +70,97 @@ describe('tracing', () => {
 
   it('getLogTrace outside a async trace context nothing', () => {
     expect(getLogTrace('aller-project-id')).to.be.undefined;
+  });
+
+  describe('SpanContext', () => {
+    it('runInNewSpanContext(fn, ...args) captures tracing', async () => {
+      const res = await new SpanContext('contexttraceid1', undefined, 0).runInNewSpanContext(function track(foo) {
+        return new Promise((resolve) => {
+          resolve({ foo, traceId: getTraceId(), spanId: getSpanId(), flags: getTracingFlags() });
+        });
+      }, 'bar');
+
+      expect(res).to.have.property('foo', 'bar');
+      expect(res).to.have.property('traceId', 'contexttraceid1');
+      expect(res).to.have.property('flags', 0);
+      expect(res).to.have.property('spanId').that.is.ok;
+    });
+
+    it('runInNewSpanContext with flags = 1 forwards flags', async () => {
+      const res = await new SpanContext('contexttraceid1', undefined, 1).runInNewSpanContext(function track(foo) {
+        return new Promise((resolve) => {
+          resolve({ foo, traceId: getTraceId(), spanId: getSpanId(), flags: getTracingFlags() });
+        });
+      }, 'bar');
+
+      expect(res).to.have.property('foo', 'bar');
+      expect(res).to.have.property('traceId', 'contexttraceid1');
+      expect(res).to.have.property('flags', 1);
+      expect(res).to.have.property('spanId').that.is.ok;
+    });
+
+    it('runInNewSpanContext without flags defaults to 0', async () => {
+      const res = await new SpanContext('contexttraceid1').runInNewSpanContext(function track(foo) {
+        return new Promise((resolve) => {
+          resolve({ foo, traceId: getTraceId(), spanId: getSpanId(), flags: getTracingFlags() });
+        });
+      }, 'bar');
+
+      expect(res).to.have.property('foo', 'bar');
+      expect(res).to.have.property('traceId', 'contexttraceid1');
+      expect(res).to.have.property('flags', 0);
+      expect(res).to.have.property('spanId').that.is.ok;
+    });
+
+    it('runInTraceContext with throwing handler throws', async () => {
+      try {
+        await new SpanContext('contexttraceid1').runInNewSpanContext(function track() {
+          return new Promise(() => {
+            throw new Error('test error');
+          });
+        }, 'bar');
+      } catch (err) {
+        // eslint-disable-next-line no-var
+        var error = err;
+      }
+
+      expect(error.message).to.equal('test error');
+    });
+
+    it('runInNewSpanContext in runInNewSpanContext keeps traceId but updates span', async () => {
+      const traceId = createTraceId();
+      const spanId = createSpanId();
+
+      const res = await new SpanContext(traceId, spanId).runInNewSpanContext(handler, 'bar');
+
+      expect(res).to.have.length(3);
+
+      expect(res[0]).to.have.property('foo', 'bar');
+      expect(res[0]).to.have.property('traceId', traceId);
+      expect(res[0]).to.have.property('spanId').that.is.ok.and.not.equal(spanId);
+
+      expect(res[1]).to.have.property('foo', 'bar');
+      expect(res[1]).to.have.property('traceId', traceId);
+      expect(res[1]).to.have.property('spanId').that.is.ok.and.not.equal(res[0].spanId, 'first compared to inner span id');
+
+      expect(res[2]).to.have.property('foo', 'bar');
+      expect(res[2]).to.have.property('traceId', traceId);
+      expect(res[2]).to.have.property('spanId').that.is.ok.and.equal(res[0].spanId, 'first compared to second span id');
+
+      async function handler(foo1) {
+        const tracing = [{ foo: foo1, traceId: getTraceId(), spanId: getSpanId() }];
+
+        await new SpanContext().runInNewSpanContext(function track(foo2) {
+          return new Promise((resolve) => {
+            tracing.push({ foo: foo2, traceId: getTraceId(), spanId: getSpanId() });
+            resolve();
+          });
+        }, foo1);
+
+        tracing.push({ foo: foo1, traceId: getTraceId(), spanId: getSpanId() });
+
+        return tracing;
+      }
+    });
   });
 });

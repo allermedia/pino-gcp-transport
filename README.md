@@ -4,6 +4,9 @@ Convert pino stdout logging to structured json suitable for google cloud logging
 
 [![Build](https://github.com/allermedia/pino-gcp-transport/actions/workflows/build.yaml/badge.svg)](https://github.com/allermedia/pino-gcp-transport/actions/workflows/build.yaml)
 
+- [Google Cloud Logging](https://cloud.google.com/logging/docs/structured-logging)
+- [Trace context](https://www.w3.org/TR/trace-context)
+
 ## Api
 
 Exported as ESM and commonjs.
@@ -13,6 +16,7 @@ Exported as ESM and commonjs.
 - [`fastifyHook()`](#fastifyhook) Fastify hook to collect tracing
 - [`getTraceHeadersAsObject()`](#gettraceheadersasobjectflags--0) Get collected tracing headers as object to forward to downstream calls
 - [`logger.js`](#logger-example) Logger example
+- [SpanContext](#span-context)
 - [Examples](/example/README.md) Middleware and logging examples
 
 ### `compose([options[, Transformation = StructuredTransformation]])`
@@ -288,6 +292,45 @@ export default pino(
   },
   transport
 );
+```
+
+## Span Context
+
+Execute in an existing tracing context.
+
+```javascript
+import pino from 'pino';
+import compose, { SpanContext, getTraceHeadersAsObject, getLogTrace } from '@aller/pino-gcp-transport';
+
+const logger = pino(
+  {
+    level: 'trace',
+    mixin() {
+      return { ...getLogTrace('aller-project-1') };
+    },
+  },
+  compose()
+);
+
+await new SpanContext('b657b24860f0a4390698ba907685c88d', 'e29221ca9e364975', 0).runInNewSpanContext(function track(foo) {
+  return new Promise((resolve) => {
+    logger.info(getTraceHeadersAsObject(), 'called with argument %s', foo);
+    resolve();
+  });
+}, 'bar');
+```
+
+Execute in a new tracing context.
+
+```javascript
+import { SpanContext, getTraceHeadersAsObject } from '@aller/pino-gcp-transport';
+
+await new SpanContext().runInNewSpanContext(function track(foo) {
+  return new Promise((resolve) => {
+    console.log(foo, getTraceHeadersAsObject());
+    resolve();
+  });
+}, 'baz');
 ```
 
 ## The projectId
