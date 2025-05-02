@@ -292,6 +292,32 @@ describe('StructuredTransformation', () => {
     expect(logMsg['logging.googleapis.com/sourceLocation']).to.have.property('function', 'Context.<anonymous>');
   });
 
+  it('maps serialized error stack to source location', () => {
+    const transport = abstractTransport(
+      (source) => {
+        pipeline(source, new StructuredTransformation(null, { projectId: 'aller-auth-1' }), destination, () => {});
+      },
+      {
+        parse: 'lines',
+      }
+    );
+
+    const logger = pino({ level: 'trace' }, transport);
+
+    logger.error({ err: new Error('foo').stack, foo: 'bar' });
+
+    const logMsg = msgs.pop();
+
+    expect(logMsg).to.have.property('logging.googleapis.com/sourceLocation');
+    expect(logMsg['logging.googleapis.com/sourceLocation'])
+      .to.have.property('file')
+      .that.equal(`file://${fileURLToPath(import.meta.url)}`);
+    expect(logMsg['logging.googleapis.com/sourceLocation']).to.have.property('line').that.is.a('number');
+    expect(logMsg['logging.googleapis.com/sourceLocation']).to.have.property('function', 'Context.<anonymous>');
+
+    expect(logMsg).to.have.property('foo', 'bar');
+  });
+
   it('maps error stack with function to source location', () => {
     const transport = abstractTransport(
       (source) => {

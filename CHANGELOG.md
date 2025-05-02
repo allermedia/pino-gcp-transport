@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## [0.1.2] - 2025-05-02
+
+- map serialized error to source location
+
 ## [0.1.1] - 2025-05-02
 
 - add SpanContext class to facilitate executing without request context

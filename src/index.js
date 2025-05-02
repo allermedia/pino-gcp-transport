@@ -110,11 +110,14 @@ export class StructuredTransformation extends Transform {
           break;
         }
         case 'err': {
-          if (typeof v.stack !== 'string') {
+          const stack = v.stack ?? v;
+          if (typeof stack !== 'string') {
             continue;
           }
-          const line = v.stack.match(STACK_PATTERN)?.groups;
-          properties.textPayload = v.stack;
+
+          properties.textPayload = stack;
+
+          const line = stack.match(STACK_PATTERN)?.groups;
 
           if (line) {
             properties[SOURCELOCATION_KEY] = {
@@ -123,9 +126,10 @@ export class StructuredTransformation extends Transform {
               function: line.function,
             };
           }
+          break;
         }
         default: {
-          if (ignoreKeys?.includes(k)) continue;
+          if (ignoreKeys?.includes(k)) break;
           properties[k] = v;
         }
       }
