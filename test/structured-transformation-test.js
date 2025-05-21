@@ -46,7 +46,7 @@ describe('StructuredTransformation', () => {
       severity: 'INFO',
       timestamp: {
         seconds: new Date().setUTCMilliseconds(0) / 1000,
-        nanos: new Date().getUTCMilliseconds(),
+        nanos: new Date().getUTCMilliseconds() * 1000000,
       },
       bar: 'baz',
     });
@@ -68,7 +68,7 @@ describe('StructuredTransformation', () => {
 
     expect(msgs.pop()).to.have.property('timestamp').that.deep.equal({
       seconds: -19872000,
-      nanos: 42,
+      nanos: 42000000,
     });
 
     ck.freeze('2025-05-16T00:00:00.000Z');
@@ -86,7 +86,7 @@ describe('StructuredTransformation', () => {
 
     expect(msgs.pop()).to.have.property('timestamp').that.deep.equal({
       seconds: 1747832881,
-      nanos: 7,
+      nanos: 7000000,
     });
   });
 
@@ -119,7 +119,7 @@ describe('StructuredTransformation', () => {
         severity: 'INFO',
         timestamp: {
           seconds: new Date().setUTCMilliseconds(0) / 1000,
-          nanos: new Date().getUTCMilliseconds(),
+          nanos: new Date().getUTCMilliseconds() * 1e6,
         },
         bar: 'baz',
         [TRACE_ID_KEY]: 'projects/aller-auth-1/traces/abc-123',
@@ -158,7 +158,7 @@ describe('StructuredTransformation', () => {
           severity: 'INFO',
           timestamp: {
             seconds: new Date().setUTCMilliseconds(0) / 1000,
-            nanos: new Date().getUTCMilliseconds(),
+            nanos: new Date().getUTCMilliseconds() * 1000000,
           },
           bar: 'baz',
           [TRACE_ID_KEY]: 'projects/aller-auth-1/traces/abc-123',
@@ -202,7 +202,7 @@ describe('StructuredTransformation', () => {
           severity: 'DEBUG',
           timestamp: {
             seconds: new Date().setUTCMilliseconds(0) / 1000,
-            nanos: new Date().getUTCMilliseconds(),
+            nanos: new Date().getUTCMilliseconds() * 1000 * 1000,
           },
           bar: 'baz',
           [TRACE_ID_KEY]: 'projects/aller-auth-1/traces/abc-123',

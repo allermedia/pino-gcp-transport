@@ -61,7 +61,7 @@ export class StructuredTransformation extends Transform {
       message: line.msg,
       ...this.extractProperties(line),
       timestamp: {
-        nanos: timestamp.getUTCMilliseconds(),
+        nanos: timestamp.getUTCMilliseconds() * 1e6,
         seconds: Math.floor(timestamp.setUTCMilliseconds(0) / 1000),
       },
       severity,
