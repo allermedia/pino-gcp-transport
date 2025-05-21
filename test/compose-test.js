@@ -60,7 +60,7 @@ describe('compose', () => {
       expect(msgs[0]).to.deep.equal({
         message: 'foo',
         severity: 'INFO',
-        timestamp: { seconds: new Date().setMilliseconds(0) / 1000, nanos: new Date().getUTCMilliseconds() * 1000 },
+        timestamp: { seconds: new Date().setMilliseconds(0) / 1000, nanos: new Date().getUTCMilliseconds() },
         my: 'prop',
       });
 
