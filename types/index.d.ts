@@ -41,7 +41,7 @@ declare module '@aller/pino-gcp-transport' {
   interface StructuredTransformationConfig extends SonicBoomOpts {
 	/**
 	 * pino ignore keys, optional list of pino ignore keys
-	 * @default {string[]} hostname pid, level, time, msg
+	 * @default hostname, pid, level, time, msg
 	 */
 	ignoreKeys?: string[];
 	[k: string]: any;

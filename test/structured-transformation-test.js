@@ -8,6 +8,7 @@ import * as ck from 'chronokinesis';
 import { StructuredTransformation } from '../src/index.js';
 import { attachTraceIdHandler, getLogTrace } from '../src/tracing.js';
 import { SPAN_ID_KEY, TRACE_ID_KEY, SAMPLED_TRACE_KEY, STACK_PATTERN } from '../src/constants.js';
+import { expect } from 'chai';
 
 describe('StructuredTransformation', () => {
   afterEach(ck.reset);
@@ -52,7 +53,7 @@ describe('StructuredTransformation', () => {
     await attachTraceIdHandler(() => {
       const transport = abstractTransport(
         (source) => {
-          pipeline(source, new StructuredTransformation(null, { projectId: 'aller-auth-1' }), destination, () => {});
+          pipeline(source, new StructuredTransformation(), destination, () => {});
         },
         {
           parse: 'lines',
@@ -88,7 +89,7 @@ describe('StructuredTransformation', () => {
       () => {
         const transport = abstractTransport(
           (source) => {
-            pipeline(source, new StructuredTransformation(null, { projectId: 'aller-auth-1' }), destination, () => {});
+            pipeline(source, new StructuredTransformation(), destination, () => {});
           },
           {
             parse: 'lines',
@@ -128,7 +129,7 @@ describe('StructuredTransformation', () => {
       () => {
         const transport = abstractTransport(
           (source) => {
-            pipeline(source, new StructuredTransformation(null, { projectId: 'aller-auth-1' }), destination, () => {});
+            pipeline(source, new StructuredTransformation(), destination, () => {});
           },
           {
             parse: 'lines',
@@ -167,7 +168,7 @@ describe('StructuredTransformation', () => {
   it('maps level to severity', () => {
     const transport = abstractTransport(
       (source) => {
-        pipeline(source, new StructuredTransformation(null, { projectId: 'aller-auth-1' }), destination, () => {});
+        pipeline(source, new StructuredTransformation(), destination, () => {});
       },
       {
         parse: 'lines',
@@ -250,7 +251,7 @@ describe('StructuredTransformation', () => {
   it('maps error stack to logging key textPayload', () => {
     const transport = abstractTransport(
       (source) => {
-        pipeline(source, new StructuredTransformation(null, { projectId: 'aller-auth-1' }), destination, () => {});
+        pipeline(source, new StructuredTransformation(), destination, () => {});
       },
       {
         parse: 'lines',
@@ -271,7 +272,7 @@ describe('StructuredTransformation', () => {
   it('maps error stack to source location', () => {
     const transport = abstractTransport(
       (source) => {
-        pipeline(source, new StructuredTransformation(null, { projectId: 'aller-auth-1' }), destination, () => {});
+        pipeline(source, new StructuredTransformation(), destination, () => {});
       },
       {
         parse: 'lines',
@@ -295,7 +296,7 @@ describe('StructuredTransformation', () => {
   it('maps serialized error stack to source location', () => {
     const transport = abstractTransport(
       (source) => {
-        pipeline(source, new StructuredTransformation(null, { projectId: 'aller-auth-1' }), destination, () => {});
+        pipeline(source, new StructuredTransformation(), destination, () => {});
       },
       {
         parse: 'lines',
@@ -321,7 +322,7 @@ describe('StructuredTransformation', () => {
   it('maps error stack with function to source location', () => {
     const transport = abstractTransport(
       (source) => {
-        pipeline(source, new StructuredTransformation(null, { projectId: 'aller-auth-1' }), destination, () => {});
+        pipeline(source, new StructuredTransformation(), destination, () => {});
       },
       {
         parse: 'lines',
@@ -374,10 +375,76 @@ describe('StructuredTransformation', () => {
     });
   });
 
+  it('keeps logger error err properties under err', () => {
+    const transport = abstractTransport(
+      (source) => {
+        pipeline(source, new StructuredTransformation(), destination, () => {});
+      },
+      {
+        parse: 'lines',
+      }
+    );
+
+    const logger = pino({ level: 'trace' }, transport);
+
+    logger.error(new ExtendedError('Unexpected', 'ERR_UNEXPECTED', { foo: 'bar' }));
+
+    let logMsg = msgs.pop();
+
+    expect(logMsg).to.have.property('err').with.property('code', 'ERR_UNEXPECTED');
+
+    expect(logMsg).to.have.property('logging.googleapis.com/sourceLocation');
+    expect(logMsg['logging.googleapis.com/sourceLocation']).to.have.property('file');
+
+    logger.error({
+      err: new ExtendedError('Unexpected', 'ERR_UNEXPECTED', { foo: 'bar' }),
+    });
+
+    logMsg = msgs.pop();
+
+    expect(logMsg).to.have.property('err').with.property('code', 'ERR_UNEXPECTED');
+
+    expect(logMsg).to.have.property('logging.googleapis.com/sourceLocation');
+    expect(logMsg['logging.googleapis.com/sourceLocation']).to.have.property('file');
+  });
+
+  it('ignores logged err context property if in ', () => {
+    const transport = abstractTransport(
+      (source) => {
+        pipeline(source, new StructuredTransformation(null, { ignoreKeys: ['err'] }), destination, () => {});
+      },
+      {
+        parse: 'lines',
+      }
+    );
+
+    const logger = pino({ level: 'trace' }, transport);
+
+    logger.error(new ExtendedError('Unexpected', 'ERR_UNEXPECTED', { foo: 'bar' }));
+
+    let logMsg = msgs.pop();
+
+    expect(logMsg).to.not.have.property('err');
+
+    expect(logMsg).to.have.property('logging.googleapis.com/sourceLocation');
+    expect(logMsg['logging.googleapis.com/sourceLocation']).to.have.property('file');
+
+    logger.error({
+      err: new ExtendedError('Unexpected', 'ERR_UNEXPECTED', { foo: 'bar' }),
+    });
+
+    logMsg = msgs.pop();
+
+    expect(logMsg).to.not.have.property('err');
+
+    expect(logMsg).to.have.property('logging.googleapis.com/sourceLocation');
+    expect(logMsg['logging.googleapis.com/sourceLocation']).to.have.property('file');
+  });
+
   it('ignores error stack parsing if no stack', () => {
     const transport = abstractTransport(
       (source) => {
-        pipeline(source, new StructuredTransformation(null, { projectId: 'aller-auth-1' }), destination, () => {});
+        pipeline(source, new StructuredTransformation(), destination, () => {});
       },
       {
         parse: 'lines',
@@ -396,7 +463,7 @@ describe('StructuredTransformation', () => {
   it('ignores error stack parsing value is null', () => {
     const transport = abstractTransport(
       (source) => {
-        pipeline(source, new StructuredTransformation(null, { projectId: 'aller-auth-1' }), destination, () => {});
+        pipeline(source, new StructuredTransformation(), destination, () => {});
       },
       {
         parse: 'lines',
@@ -415,7 +482,7 @@ describe('StructuredTransformation', () => {
   it('ignores error if malformatted stack parsing', () => {
     const transport = abstractTransport(
       (source) => {
-        pipeline(source, new StructuredTransformation(null, { projectId: 'aller-auth-1' }), destination, () => {});
+        pipeline(source, new StructuredTransformation(), destination, () => {});
       },
       {
         parse: 'lines',
@@ -434,3 +501,19 @@ describe('StructuredTransformation', () => {
     expect(logMsg).to.not.have.property('logging.googleapis.com/sourceLocation');
   });
 });
+
+class ExtendedError extends Error {
+  /**
+   * @param {string} message - The error message.
+   * @param {string} code - The error code.
+   * @param {Record<string, any>} data - Additional error data.
+   */
+  constructor(message, code, data) {
+    super(message);
+    this.name = 'ExtendedError';
+    this.code = code;
+    this.data = {
+      ...data,
+    };
+  }
+}

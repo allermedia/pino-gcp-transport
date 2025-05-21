@@ -110,9 +110,14 @@ export class StructuredTransformation extends Transform {
           break;
         }
         case 'err': {
+          if (!ignoreKeys?.includes(k)) {
+            properties[k] = v;
+          }
+
           const stack = v.stack ?? v;
+
           if (typeof stack !== 'string') {
-            continue;
+            break;
           }
 
           properties.textPayload = stack;

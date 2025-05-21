@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## [0.1.3] - 2025-05-21
+
+- keeps logged error with properties, unless ignored in ignore keys
+
 ## [0.1.2] - 2025-05-02
 
 - map serialized error to source location
