@@ -180,7 +180,7 @@ declare module '@aller/pino-gcp-transport' {
   interface StructuredJson {
 	message?: string | object;
 	httpRequest?: IHttpRequest;
-	timestamp?: Date;
+	timestamp?: { seconds: number; nanos: number };
 	[INSERT_ID_KEY]?: string;
 	[OPERATION_KEY]?: object;
 	[SOURCE_LOCATION_KEY]?: object;

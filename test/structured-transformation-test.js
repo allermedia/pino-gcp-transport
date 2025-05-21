@@ -44,8 +44,49 @@ describe('StructuredTransformation', () => {
     expect(msgs[0]).to.deep.equal({
       message: 'foo',
       severity: 'INFO',
-      timestamp: new Date(),
+      timestamp: {
+        seconds: new Date().setUTCMilliseconds(0) / 1000,
+        nanos: new Date().getUTCMilliseconds() * 1000,
+      },
       bar: 'baz',
+    });
+  });
+
+  it('forwards time as timestamp object with seconds and fractional nanoseconds to destination', () => {
+    const transport = abstractTransport(
+      (source) => {
+        pipeline(source, new StructuredTransformation(), destination, () => {});
+      },
+      { parse: 'lines' }
+    );
+
+    const logger = pino(transport);
+
+    ck.freeze('1969-05-16T00:00:00.042Z');
+
+    logger.info({ bar: 'baz' }, 'foo');
+
+    expect(msgs.pop()).to.have.property('timestamp').that.deep.equal({
+      seconds: -19872000,
+      nanos: 42000,
+    });
+
+    ck.freeze('2025-05-16T00:00:00.000Z');
+
+    logger.info({ bar: 'baz' }, 'foo');
+
+    expect(msgs.pop()).to.have.property('timestamp').that.deep.equal({
+      seconds: 1747353600,
+      nanos: 0,
+    });
+
+    ck.freeze('2025-05-21T13:08:01.007Z');
+
+    logger.info({ bar: 'baz' }, 'foo');
+
+    expect(msgs.pop()).to.have.property('timestamp').that.deep.equal({
+      seconds: 1747832881,
+      nanos: 7000,
     });
   });
 
@@ -76,7 +117,10 @@ describe('StructuredTransformation', () => {
       expect(msgs[0]).to.deep.include({
         message: 'foo',
         severity: 'INFO',
-        timestamp: new Date(),
+        timestamp: {
+          seconds: new Date().setUTCMilliseconds(0) / 1000,
+          nanos: new Date().getUTCMilliseconds() * 1000,
+        },
         bar: 'baz',
         [TRACE_ID_KEY]: 'projects/aller-auth-1/traces/abc-123',
         [SAMPLED_TRACE_KEY]: false,
@@ -112,7 +156,10 @@ describe('StructuredTransformation', () => {
         expect(msgs[0]).to.deep.include({
           message: 'foo',
           severity: 'INFO',
-          timestamp: new Date(),
+          timestamp: {
+            seconds: new Date().setUTCMilliseconds(0) / 1000,
+            nanos: new Date().getUTCMilliseconds() * 1000,
+          },
           bar: 'baz',
           [TRACE_ID_KEY]: 'projects/aller-auth-1/traces/abc-123',
           [SAMPLED_TRACE_KEY]: true,
@@ -153,7 +200,10 @@ describe('StructuredTransformation', () => {
         expect(msgs[0]).to.deep.equal({
           message: 'foo',
           severity: 'DEBUG',
-          timestamp: new Date(),
+          timestamp: {
+            seconds: new Date().setUTCMilliseconds(0) / 1000,
+            nanos: new Date().getUTCMilliseconds() * 1000,
+          },
           bar: 'baz',
           [TRACE_ID_KEY]: 'projects/aller-auth-1/traces/abc-123',
           [SPAN_ID_KEY]: '54321',

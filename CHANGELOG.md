@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## [0.2.0] - 2025-05-21
+
+- structure timestamp as object with UTC seconds from epoch and fractional nanoseconds as stated in docs
+
 ## [0.1.3] - 2025-05-21
 
 - keeps logged error with properties, unless ignored in ignore keys

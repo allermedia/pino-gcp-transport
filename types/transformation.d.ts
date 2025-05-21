@@ -24,7 +24,7 @@ export declare const TRACE_SAMPLED_KEY = 'logging.googleapis.com/trace_sampled';
 export interface StructuredJson {
   message?: string | object;
   httpRequest?: IHttpRequest;
-  timestamp?: Date;
+  timestamp?: { seconds: number; nanos: number };
   [INSERT_ID_KEY]?: string;
   [OPERATION_KEY]?: object;
   [SOURCE_LOCATION_KEY]?: object;

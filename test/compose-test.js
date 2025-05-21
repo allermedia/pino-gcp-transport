@@ -57,7 +57,12 @@ describe('compose', () => {
 
       logger.info({ bar: 'baz', my: 'prop' }, 'foo');
 
-      expect(msgs[0]).to.deep.equal({ message: 'foo', severity: 'INFO', timestamp: new Date(), my: 'prop' });
+      expect(msgs[0]).to.deep.equal({
+        message: 'foo',
+        severity: 'INFO',
+        timestamp: { seconds: new Date().setMilliseconds(0) / 1000, nanos: new Date().getUTCMilliseconds() * 1000 },
+        my: 'prop',
+      });
 
       transport.destroy();
     });

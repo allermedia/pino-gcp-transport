@@ -55,10 +55,15 @@ export class StructuredTransformation extends Transform {
     const line = typeof chunk === 'string' ? JSON.parse(chunk) : chunk;
     const severity = this.convertToSeverity(line.level);
 
+    const timestamp = new Date(line.time);
+
     return {
       message: line.msg,
       ...this.extractProperties(line),
-      timestamp: new Date(line.time),
+      timestamp: {
+        nanos: timestamp.getMilliseconds() * 1000,
+        seconds: Math.floor(timestamp.setUTCMilliseconds(0) / 1000),
+      },
       severity,
     };
   }
