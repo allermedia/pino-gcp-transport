@@ -4,7 +4,7 @@
 
 ## [0.2.2] - 2025-05-21
 
-- structure timestamp as object with UTC seconds from epoch and fractional seconds as nano as stated in docs
+- structure timestamp as object with UTC seconds from epoch and fractional seconds as nanoseconds as stated in docs
 
 ## [0.1.3] - 2025-05-21
 

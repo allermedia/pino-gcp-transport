@@ -119,7 +119,7 @@ describe('StructuredTransformation', () => {
         severity: 'INFO',
         timestamp: {
           seconds: new Date().setUTCMilliseconds(0) / 1000,
-          nanos: new Date().getUTCMilliseconds() * 1e6,
+          nanos: new Date().getUTCMilliseconds() * 10 ** 6,
         },
         bar: 'baz',
         [TRACE_ID_KEY]: 'projects/aller-auth-1/traces/abc-123',
