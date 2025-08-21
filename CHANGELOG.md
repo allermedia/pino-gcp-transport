@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## [0.2.3] - 2025-08-21
+
+- republish
+
 ## [0.2.2] - 2025-05-21
 
 - structure timestamp as object with UTC seconds from epoch and fractional seconds as nanoseconds as stated in docs
