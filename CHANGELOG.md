@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## [0.3.0] - 2025-10-06
+
+- allow peer dependency pino-abstract-transport@3
+- major bump pino@10
+
 ## [0.2.3] - 2025-08-21
 
 - republish

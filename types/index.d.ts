@@ -90,6 +90,14 @@ declare module '@aller/pino-gcp-transport' {
 	 */
 	export function fastifyHook(): (request: import("fastify").FastifyRequest, _reply: import("fastify").FastifyReply, done: import("fastify").DoneFuncWithErrOrRes) => void;
 	/**
+	 * Store tracing information
+	 * */
+	export function storeTracing({ traceId, spanId, flags }: {
+		traceId: string;
+		spanId: string;
+		flags?: number;
+	}, callback: CallableFunction): void;
+	/**
 	 * Attach trace and span id handler
 	 * @param flags tracing flags
 	 */
@@ -287,6 +295,14 @@ declare module '@aller/pino-gcp-transport/tracing' {
 	 * Create fastify hook
 	 */
 	export function fastifyHook(): (request: import("fastify").FastifyRequest, _reply: import("fastify").FastifyReply, done: import("fastify").DoneFuncWithErrOrRes) => void;
+	/**
+	 * Store tracing information
+	 * */
+	export function storeTracing({ traceId, spanId, flags }: {
+		traceId: string;
+		spanId: string;
+		flags?: number;
+	}, callback: CallableFunction): void;
 	/**
 	 * Attach trace and span id handler
 	 * @param flags tracing flags

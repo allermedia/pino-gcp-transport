@@ -140,7 +140,7 @@ export function fastifyHook() {
  * @param {{traceId:string, spanId:string, flags?:number}} tracing
  * @param {CallableFunction} callback
  */
-function storeTracing({ traceId, spanId, flags = 0 }, callback) {
+export function storeTracing({ traceId, spanId, flags = 0 }, callback) {
   store.run(new Map(), () => {
     store.getStore().set(TRACE_ID_KEY, traceId);
     store.getStore().set(SPAN_ID_KEY, spanId);

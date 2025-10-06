@@ -37,7 +37,6 @@ export class StructuredTransformation extends Transform {
     this.ignoreKeys = config?.ignoreKeys || this.ignoreKeys;
   }
   /**
-   *
    * @param {string | object} chunk
    * @param {string} _encoding
    * @param {CallableFunction} callback
