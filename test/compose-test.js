@@ -3,8 +3,7 @@ import { randomInt } from 'node:crypto';
 import { pino } from 'pino';
 import * as ck from 'chronokinesis';
 
-import compose from '../src/index.js';
-import { TRACE_ID_KEY } from '../src/constants.js';
+import compose, { TRACE_ID_KEY } from '@aller/pino-gcp-transport';
 
 describe('compose', () => {
   const msgs = [];

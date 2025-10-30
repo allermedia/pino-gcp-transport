@@ -1,7 +1,7 @@
 {
   "name": "@aller/pino-gcp-transport",
   "description": "Pino google cloud structured logging stdout transport",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "type": "module",
   "module": "./src/index.js",
   "main": "./lib/index.cjs",

@@ -4,8 +4,7 @@ import fastify from 'fastify';
 import nock from 'nock';
 import pino from 'pino';
 
-import compose from '../src/index.js';
-import { fastifyHook, getTraceHeadersAsObject, getLogTrace } from '../src/tracing.js';
+import compose, { fastifyHook, getTraceHeadersAsObject, getLogTrace } from '@aller/pino-gcp-transport';
 
 describe('fastify', () => {
   /** @type {fastify.Application} */

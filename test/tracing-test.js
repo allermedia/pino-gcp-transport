@@ -7,7 +7,8 @@ import {
   SpanContext,
   createTraceId,
   createSpanId,
-} from '../src/tracing.js';
+  formatTraceparent,
+} from '@aller/pino-gcp-transport/tracing';
 
 describe('tracing', () => {
   it('getTraceId returns trace id', async () => {
@@ -70,6 +71,19 @@ describe('tracing', () => {
 
   it('getLogTrace outside a async trace context nothing', () => {
     expect(getLogTrace('aller-project-id')).to.be.undefined;
+  });
+
+  describe('formatTraceparent', () => {
+    it('formats traceing arguments to traceparent header value', () => {
+      expect(formatTraceparent('traceid')).to.match(/^00-traceid-\w+-00/);
+      expect(formatTraceparent('traceid', 'spanid')).to.equal('00-traceid-spanid-00');
+      expect(formatTraceparent('traceid', 'spanid', 'tracingflags')).to.equal('00-traceid-spanid-00');
+      expect(formatTraceparent('traceid', 'spanid', 1)).to.equal('00-traceid-spanid-01');
+      expect(formatTraceparent('traceid', 'spanid', 17)).to.equal('00-traceid-spanid-11');
+      expect(formatTraceparent('traceid', 'spanid', '17')).to.equal('00-traceid-spanid-11');
+      expect(formatTraceparent('traceid', null, 0)).to.match(/^00-traceid-\w+-00/);
+      expect(formatTraceparent(null, 'spanid', 0)).to.match(/^00-\w+-spanid-00/);
+    });
   });
 
   describe('SpanContext', () => {

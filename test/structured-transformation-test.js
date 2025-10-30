@@ -5,10 +5,15 @@ import abstractTransport from 'pino-abstract-transport';
 import { pino } from 'pino';
 import * as ck from 'chronokinesis';
 
-import { StructuredTransformation } from '../src/index.js';
-import { attachTraceIdHandler, getLogTrace } from '../src/tracing.js';
-import { SPAN_ID_KEY, TRACE_ID_KEY, SAMPLED_TRACE_KEY, STACK_PATTERN } from '../src/constants.js';
-import { expect } from 'chai';
+import {
+  StructuredTransformation,
+  attachTraceIdHandler,
+  getLogTrace,
+  SPAN_ID_KEY,
+  TRACE_ID_KEY,
+  SAMPLED_TRACE_KEY,
+  STACK_PATTERN,
+} from '@aller/pino-gcp-transport';
 
 describe('StructuredTransformation', () => {
   afterEach(ck.reset);

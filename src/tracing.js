@@ -30,20 +30,15 @@ export function getTracingFlags() {
  * @param {number} [flags] 1 = trace is sampled seems to be the only flag that is supported
  */
 export function getTraceHeaders(flags) {
-  if (flags === undefined || flags === null) {
-    flags = getTracingFlags();
-  }
-  if (typeof flags !== 'number' || flags > 255 || flags < 0) {
-    flags = 0;
-  }
+  const flagn = normalizeTracingFlags(flags ?? getTracingFlags());
   /** @type {Map<string, string>} */
   const headers = new Map();
 
   const traceId = store.getStore()?.get(TRACE_ID_KEY);
   if (traceId) {
     const spanId = store.getStore().get(SPAN_ID_KEY);
-    headers.set(X_HEADER_KEY, `${traceId}/${spanId};op=${(flags & 1) === 1 ? '1' : 0}`);
-    headers.set(TRACEPARENT_HEADER_KEY, `00-${traceId}-${spanId}-${flags.toString(16).padStart(2, '0')}`);
+    headers.set(X_HEADER_KEY, `${traceId}/${spanId};op=${(flagn & 1) === 1 ? 1 : 0}`);
+    headers.set(TRACEPARENT_HEADER_KEY, formatTraceparent(traceId, spanId, flagn));
   }
 
   return headers;
@@ -226,4 +221,26 @@ export function createTraceId() {
  */
 export function createSpanId() {
   return randomBytes(8).toString('hex');
+}
+
+/**
+ * Format traceparent header value
+ * @param {string} [traceId] parent trace ID
+ * @param {string} [spanId] parent span ID
+ * @param {number|string} [flags] flags as number
+ * @returns "00-traceid-spanid-hex(flags)"
+ */
+export function formatTraceparent(traceId, spanId, flags = 0) {
+  return `00-${traceId || createTraceId()}-${spanId || createSpanId()}-${Number(normalizeTracingFlags(flags)).toString(16).padStart(2, '0')}`;
+}
+
+/**
+ * @param {number|string} [flags] numeric tracing flags
+ */
+function normalizeTracingFlags(flags) {
+  let flagn = Number(flags);
+  if (isNaN(flagn) || flagn > 255 || flagn < 0) {
+    flagn = 0;
+  }
+  return flagn;
 }

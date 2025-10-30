@@ -1,8 +1,8 @@
 'use strict';
 
 const pino = require('pino');
-const transport = require('../lib/index.cjs');
-const { TRACE_ID_KEY, getTraceId, attachTraceIdHandler } = require('../lib/index.cjs');
+const transport = require('@aller/pino-gcp-transport');
+const { TRACE_ID_KEY, getTraceId, attachTraceIdHandler } = require('@aller/pino-gcp-transport');
 
 const logger = pino(
   {

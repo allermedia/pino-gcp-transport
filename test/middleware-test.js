@@ -5,8 +5,7 @@ import request from 'supertest';
 import nock from 'nock';
 import pino from 'pino';
 
-import compose from '../src/index.js';
-import { middleware, getTraceHeadersAsObject, getLogTrace } from '../src/tracing.js';
+import compose, { middleware, getTraceHeadersAsObject, getLogTrace } from '@aller/pino-gcp-transport';
 
 describe('middleware', () => {
   /** @type {express.Application} */
@@ -132,12 +131,12 @@ describe('middleware', () => {
       const { headers } = await downstreamCall;
 
       expect(headers)
-        .to.have.property('x-cloud-trace-context')
-        .that.match(/^sampledtraceid\/[0-9a-f]{16};op=1$/);
-
-      expect(headers)
         .to.have.property('traceparent')
         .that.match(/00-sampledtraceid-[0-9a-f]{16}-01$/);
+
+      expect(headers)
+        .to.have.property('x-cloud-trace-context')
+        .that.match(/^sampledtraceid\/[0-9a-f]{16};op=1$/);
     });
 
     it('request with legacy X-Cloud-Trace-Context without op flags sets op flags to 0', async () => {

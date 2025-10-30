@@ -112,6 +112,14 @@ declare module '@aller/pino-gcp-transport' {
 	 * @returns 8 random bytes as hex string
 	 */
 	export function createSpanId(): string;
+	/**
+	 * Format traceparent header value
+	 * @param traceId parent trace ID
+	 * @param spanId parent span ID
+	 * @param flags flags as number
+	 * @returns "00-traceid-spanid-hex(flags)"
+	 */
+	export function formatTraceparent(traceId?: string, spanId?: string, flags?: number | string): string;
 	/** Recommended trace header in format "00-traceid-spanid-01" */
 	export const TRACEPARENT_HEADER_KEY: "traceparent";
 	/** Legacy header in format "traceid/spanid;op=0" */
@@ -318,6 +326,14 @@ declare module '@aller/pino-gcp-transport/tracing' {
 	 * @returns 8 random bytes as hex string
 	 */
 	export function createSpanId(): string;
+	/**
+	 * Format traceparent header value
+	 * @param traceId parent trace ID
+	 * @param spanId parent span ID
+	 * @param flags flags as number
+	 * @returns "00-traceid-spanid-hex(flags)"
+	 */
+	export function formatTraceparent(traceId?: string, spanId?: string, flags?: number | string): string;
 	/** Recommended trace header in format "00-traceid-spanid-01" */
 	export const TRACEPARENT_HEADER_KEY: "traceparent";
 	/** Legacy header in format "traceid/spanid;op=0" */
