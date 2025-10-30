@@ -37,7 +37,7 @@ export function getTraceHeaders(flags) {
   const traceId = store.getStore()?.get(TRACE_ID_KEY);
   if (traceId) {
     const spanId = store.getStore().get(SPAN_ID_KEY);
-    headers.set(X_HEADER_KEY, `${traceId}/${spanId};op=${(flagn & 1) === 1 ? 1 : 0}`);
+    headers.set(X_HEADER_KEY, `${traceId}/${spanId};op=${flagn & 1}`);
     headers.set(TRACEPARENT_HEADER_KEY, formatTraceparent(traceId, spanId, flagn));
   }
 
