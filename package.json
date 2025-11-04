@@ -51,7 +51,7 @@
     "url": "git+https://github.com/allermedia/pino-gcp-transport.git"
   },
   "devDependencies": {
-    "@rollup/plugin-commonjs": "^28.0.1",
+    "@rollup/plugin-commonjs": "^29.0.0",
     "@rollup/plugin-node-resolve": "^16.0.1",
     "@types/chai": "^5.0.0",
     "@types/express": "^5.0.1",
