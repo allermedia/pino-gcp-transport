@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## [v1.0.0] - 2025-11-12
+
+No breaking changes, but it is used in production.
+
+- publish package with github actions
+
 ## [0.3.1] - 2025-10-06
 
 - export format traceparent function

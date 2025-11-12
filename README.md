@@ -4,9 +4,6 @@ Convert pino stdout logging to structured json suitable for google cloud logging
 
 [![Build](https://github.com/allermedia/pino-gcp-transport/actions/workflows/build.yaml/badge.svg)](https://github.com/allermedia/pino-gcp-transport/actions/workflows/build.yaml)
 
-- [Google Cloud Logging](https://cloud.google.com/logging/docs/structured-logging)
-- [Trace context](https://www.w3.org/TR/trace-context)
-
 ## Api
 
 Exported as ESM and commonjs.
@@ -18,6 +15,7 @@ Exported as ESM and commonjs.
 - [`logger.js`](#logger-example) Logger example
 - [SpanContext](#span-context)
 - [Examples](/example/README.md) Middleware and logging examples
+- [References](#references)
 
 ### `compose([options[, Transformation = StructuredTransformation]])`
 
@@ -374,3 +372,8 @@ resource "google_cloud_run_v2_service" "myapp" {
         value = google_project.default.project_id
       }
 ```
+
+## References
+
+- [Google Cloud Logging ⇗](https://cloud.google.com/logging/docs/structured-logging)
+- [Trace context ⇗](https://www.w3.org/TR/trace-context)
