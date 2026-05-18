@@ -38,3 +38,7 @@ package-lock.json
 
 *.d.ts.map
 .env
+
+# Claude Code
+CLAUDE.md
+.claude/

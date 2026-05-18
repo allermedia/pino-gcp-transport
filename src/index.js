@@ -169,6 +169,7 @@ export default function compose(opts, Transformation = StructuredTransformation)
         },
       })
     );
+    // @ts-ignore The runtime works (module.exports = SonicBoom with SonicBoom.SonicBoom = SonicBoom attached), but the type check doesn't.
     destinations.push(new SonicBoom({ dest: opts?.destination ?? 1, ...opts }));
   }
 
