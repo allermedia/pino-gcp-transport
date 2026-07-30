@@ -58,7 +58,7 @@ describe('middleware', () => {
     });
 
     app.get('/log/error', (req, res) => {
-      logger.error(new Error(req.query.message ?? 'expected'));
+      logger.error(new Error(String(req.query.message ?? 'expected')));
       res.send({});
     });
 

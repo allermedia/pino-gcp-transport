@@ -55,7 +55,7 @@ export function getTraceHeadersAsObject(flags) {
 
 /**
  * Get tracing for logger suitable for mixin
- * @param {string} projectId google project id required to build the logging trace id key
+ * @param {string} [projectId] google project id required to build the logging trace id key
  * @returns {Record<string, any>|undefined} object with trace logging parameters
  */
 export function getLogTrace(projectId) {
@@ -146,9 +146,9 @@ export function storeTracing({ traceId, spanId, flags = 0 }, callback) {
 
 /**
  * Attach trace and span id handler
- * @param {(...args:any[]) => Promise<any>} handler
- * @param {string} traceId
- * @param {string} spanId
+ * @param {(...args:any[]) => any} handler
+ * @param {string} [traceId] parent trace id, generated if omitted
+ * @param {string} [spanId] parent span id, generated if omitted
  * @param {number} [flags] tracing flags
  */
 export function attachTraceIdHandler(handler, traceId, spanId, flags = 0) {
@@ -175,7 +175,7 @@ export class SpanContext {
   }
   /**
    * Run function in new span context
-   * @param {(...args:any) => Promise<any>} fn
+   * @param {(...args:any[]) => any} fn
    * @param  {...any} args arguments passed to handler
    */
   runInNewSpanContext(fn, ...args) {
@@ -184,7 +184,7 @@ export class SpanContext {
   }
   /**
    * Run function in current span context
-   * @param {(...args:any) => Promise<any>} fn
+   * @param {(...args:any[]) => any} fn
    * @param  {...any} args arguments passed to handler
    */
   runInCurrentSpanContext(fn, ...args) {

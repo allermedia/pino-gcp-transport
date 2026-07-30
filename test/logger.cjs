@@ -14,6 +14,7 @@ const logger = pino(
     },
   },
   // transport({ destination: './logs/test.log', projectId: 'aller-project-1', sync: true, append: false })
+  // @ts-expect-error the CJS build reassigns module.exports to the compose function itself, which the generated types don't reflect
   transport({ destination: 1, projectId: 'aller-project-1', sync: true })
 );
 

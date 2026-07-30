@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## v1.0.1 - 2026-07-30
+
+- fix type declarations: optional arguments to `compose`, `attachTraceIdHandler`, `getLogTrace`, and span context functions are now declared optional, and handlers may be synchronous
+- type check tests
+
 ## v1.0.0 - 2025-11-12
 
 No breaking changes, but it is used in production.

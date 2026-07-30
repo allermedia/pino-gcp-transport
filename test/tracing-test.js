@@ -59,14 +59,14 @@ describe('tracing', () => {
         expect(getTraceId()).to.match(/^[0-9a-f]{32}$/);
         expect(getTraceId()).to.equal(traceId);
       },
-      false,
+      /** @type {any} */ (false),
       'span-1'
     );
   });
 
   it('getLogTrace without project id returns nothing', () => {
     expect(getLogTrace()).to.be.undefined;
-    expect(getLogTrace({})).to.be.undefined;
+    expect(getLogTrace(/** @type {any} */ ({}))).to.be.undefined;
   });
 
   it('getLogTrace outside a async trace context nothing', () => {

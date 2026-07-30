@@ -150,7 +150,7 @@ export class StructuredTransformation extends Transform {
 
 /**
  * Compose transport to write google cloud structured log
- * @param {import('types').StructuredTransformationConfig} opts - transport options
+ * @param {import('types').StructuredTransformationConfig} [opts] - optional transport options, defaults to writing to stdout
  * @param {typeof StructuredTransformation|typeof Transform} [Transformation] - optional structured transformation stream
  * @returns {ReturnType<typeof import('pino-abstract-transport')>}
  */

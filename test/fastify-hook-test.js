@@ -7,7 +7,7 @@ import pino from 'pino';
 import compose, { fastifyHook, getTraceHeadersAsObject, getLogTrace } from '@aller/pino-gcp-transport';
 
 describe('fastify', () => {
-  /** @type {fastify.Application} */
+  /** @type {import('fastify').FastifyInstance} */
   let app;
   /** @type {pino.Logger} */
   let logger;
@@ -61,7 +61,7 @@ describe('fastify', () => {
     });
 
     app.get('/log/error', (req, res) => {
-      logger.error(new Error(req.query.message ?? 'expected'));
+      logger.error(new Error(String(/** @type {any} */ (req.query).message ?? 'expected')));
       res.send({});
     });
   });
@@ -182,7 +182,7 @@ describe('fastify', () => {
           })
       );
 
-      await app.inject().get('/downstream').headers({ traceparent: '00-traceid-spanid-00' }).query({ flags: 17 });
+      await app.inject().get('/downstream').headers({ traceparent: '00-traceid-spanid-00' }).query({ flags: '17' });
 
       const { headers } = await downstreamCall;
 

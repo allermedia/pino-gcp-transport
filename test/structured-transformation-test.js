@@ -291,6 +291,7 @@ describe('StructuredTransformation', () => {
     const stackMatch = [];
     stack.replace(stackToSourceLocationPattern, (...args) => {
       stackMatch.push(args.pop());
+      return '';
     });
 
     expect(stackMatch.length).to.equal(stack.split('\n').length - 1);

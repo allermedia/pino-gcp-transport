@@ -3,10 +3,10 @@ declare module '@aller/pino-gcp-transport' {
 	import type { SonicBoomOpts } from 'sonic-boom';
   /**
    * Compose transport to write google cloud structured log
-   * @param opts - transport options
+   * @param opts - optional transport options, defaults to writing to stdout
    * @param Transformation - optional structured transformation stream
    * */
-  export default function compose(opts: StructuredTransformationConfig, Transformation?: typeof StructuredTransformation | typeof Transform): ReturnType<typeof import("pino-abstract-transport")>;
+  export default function compose(opts?: StructuredTransformationConfig, Transformation?: typeof StructuredTransformation | typeof Transform): ReturnType<typeof import("pino-abstract-transport")>;
   /**
    * Transform pino log record to Google Cloud logging
    *
@@ -64,7 +64,7 @@ declare module '@aller/pino-gcp-transport' {
 	 * @param projectId google project id required to build the logging trace id key
 	 * @returns object with trace logging parameters
 	 */
-	export function getLogTrace(projectId: string): Record<string, any> | undefined;
+	export function getLogTrace(projectId?: string): Record<string, any> | undefined;
 	/**
 	 * Express trace id from header
 	 * */
@@ -99,9 +99,11 @@ declare module '@aller/pino-gcp-transport' {
 	}, callback: CallableFunction): void;
 	/**
 	 * Attach trace and span id handler
+	 * @param traceId parent trace id, generated if omitted
+	 * @param spanId parent span id, generated if omitted
 	 * @param flags tracing flags
 	 */
-	export function attachTraceIdHandler(handler: (...args: any[]) => Promise<any>, traceId: string, spanId: string, flags?: number): Promise<any>;
+	export function attachTraceIdHandler(handler: (...args: any[]) => any, traceId?: string, spanId?: string, flags?: number): Promise<any>;
 	/**
 	 * Create new trace id
 	 * @returns 16 random bytes as hex
@@ -142,12 +144,12 @@ declare module '@aller/pino-gcp-transport' {
 		 * Run function in new span context
 		 * @param  args arguments passed to handler
 		 */
-		runInNewSpanContext(fn: (...args: any) => Promise<any>, ...args: any[]): any;
+		runInNewSpanContext(fn: (...args: any[]) => any, ...args: any[]): any;
 		/**
 		 * Run function in current span context
 		 * @param  args arguments passed to handler
 		 */
-		runInCurrentSpanContext(fn: (...args: any) => Promise<any>, ...args: any[]): Promise<any>;
+		runInCurrentSpanContext(fn: (...args: any[]) => any, ...args: any[]): Promise<any>;
 	}
 	/** @type {string} Debug or trace information. */
 	export const SEVERITY_DEBUG: string;
@@ -278,7 +280,7 @@ declare module '@aller/pino-gcp-transport/tracing' {
 	 * @param projectId google project id required to build the logging trace id key
 	 * @returns object with trace logging parameters
 	 */
-	export function getLogTrace(projectId: string): Record<string, any> | undefined;
+	export function getLogTrace(projectId?: string): Record<string, any> | undefined;
 	/**
 	 * Express trace id from header
 	 * */
@@ -313,9 +315,11 @@ declare module '@aller/pino-gcp-transport/tracing' {
 	}, callback: CallableFunction): void;
 	/**
 	 * Attach trace and span id handler
+	 * @param traceId parent trace id, generated if omitted
+	 * @param spanId parent span id, generated if omitted
 	 * @param flags tracing flags
 	 */
-	export function attachTraceIdHandler(handler: (...args: any[]) => Promise<any>, traceId: string, spanId: string, flags?: number): Promise<any>;
+	export function attachTraceIdHandler(handler: (...args: any[]) => any, traceId?: string, spanId?: string, flags?: number): Promise<any>;
 	/**
 	 * Create new trace id
 	 * @returns 16 random bytes as hex
@@ -356,12 +360,12 @@ declare module '@aller/pino-gcp-transport/tracing' {
 		 * Run function in new span context
 		 * @param  args arguments passed to handler
 		 */
-		runInNewSpanContext(fn: (...args: any) => Promise<any>, ...args: any[]): any;
+		runInNewSpanContext(fn: (...args: any[]) => any, ...args: any[]): any;
 		/**
 		 * Run function in current span context
 		 * @param  args arguments passed to handler
 		 */
-		runInCurrentSpanContext(fn: (...args: any) => Promise<any>, ...args: any[]): Promise<any>;
+		runInCurrentSpanContext(fn: (...args: any[]) => any, ...args: any[]): Promise<any>;
 	}
 
 	export {};

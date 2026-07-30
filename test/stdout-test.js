@@ -12,7 +12,7 @@ describe('stdout', () => {
     const lines = stdout.split('\n').filter(Boolean);
 
     for (let i = 0; i < lines.length; i++) {
-      expect(JSON.parse(lines[i]), i).to.have.property('severity').that.is.ok;
+      expect(JSON.parse(lines[i]), `line ${i}`).to.have.property('severity').that.is.ok;
     }
   });
 });
