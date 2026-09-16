@@ -2,20 +2,30 @@
 
 Convert pino stdout logging to structured json suitable for google cloud logging.
 
-[![Build](https://github.com/allermedia/pino-gcp-transport/actions/workflows/build.yaml/badge.svg)](https://github.com/allermedia/pino-gcp-transport/actions/workflows/build.yaml)
+[![Build](https://github.com/allermedia/pino-gcp-transport/actions/workflows/build.yaml/badge.svg)](https://github.com/allermedia/pino-gcp-transport/actions/workflows/build.yaml)[![Build (Windows)](https://github.com/allermedia/pino-gcp-transport/actions/workflows/build-windows.yaml/badge.svg)](https://github.com/allermedia/pino-gcp-transport/actions/workflows/build-windows.yaml)
+
+<!-- toc -->
+
+- [Api](#api)
+  - [`compose([options[, Transformation = StructuredTransformation]])`](#composeoptions-transformation--structuredtransformation)
+  - [`middleware()`](#middleware)
+  - [`fastifyHook()`](#fastifyhook)
+  - [`getLogTrace(projectId)`](#getlogtraceprojectid)
+  - [`getTraceHeaders([flags = 0])`](#gettraceheadersflags--0)
+  - [`getTraceHeadersAsObject([flags = 0])`](#gettraceheadersasobjectflags--0)
+- [Setup example](#setup-example)
+  - [Express middleware](#express-middleware)
+  - [Fastify hook](#fastify-hook)
+- [Logger example](#logger-example)
+- [Span Context](#span-context)
+- [The projectId](#the-projectid)
+- [References](#references)
+
+<!-- /toc -->
 
 ## Api
 
-Exported as ESM and commonjs.
-
-- [`compose()`](#composeoptions-transformation--structuredtransformation) Compose transport to get google structured log
-- [`middleware()`](#middleware) Express middleware to collect tracing
-- [`fastifyHook()`](#fastifyhook) Fastify hook to collect tracing
-- [`getTraceHeadersAsObject()`](#gettraceheadersasobjectflags--0) Get collected tracing headers as object to forward to downstream calls
-- [`logger.js`](#logger-example) Logger example
-- [SpanContext](#span-context)
-- [Examples](/example/README.md) Middleware and logging examples
-- [References](#references)
+Exported as ESM and commonjs. Runnable middleware and logging examples are found in [example](/example/README.md).
 
 ### `compose([options[, Transformation = StructuredTransformation]])`
 

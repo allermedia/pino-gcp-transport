@@ -2,7 +2,9 @@
 
 ## Start
 
+From the repository root:
+
 ```sh
 npm i
-node example/express/app.js
+npm run start:express --workspace example
 ```

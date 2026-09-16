@@ -2,7 +2,9 @@
 
 ## Start
 
+From the repository root:
+
 ```sh
 npm i
-node example/fastify/app.js
+npm run start:fastify --workspace example
 ```

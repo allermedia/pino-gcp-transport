@@ -1,0 +1,20 @@
+{
+  "name": "@aller/pino-gcp-transport-example",
+  "description": "Example express and fastify apps using @aller/pino-gcp-transport",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "scripts": {
+    "start:express": "node express/app.js",
+    "start:fastify": "node fastify/app.js"
+  },
+  "dependencies": {
+    "@aller/pino-gcp-transport": "file:..",
+    "exp-config": "^5.0.0",
+    "express": "^5.1.0",
+    "fastify": "^5.3.2",
+    "pino": "^10.0.0",
+    "pino-pretty": "^13.0.0"
+  }
+}

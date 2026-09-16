@@ -1,7 +1,7 @@
 {
   "name": "@aller/pino-gcp-transport",
   "description": "Pino google cloud structured logging stdout transport",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "type": "module",
   "module": "./src/index.js",
   "main": "./lib/index.cjs",
@@ -28,10 +28,12 @@
     "posttest": "npm run lint && npm run example",
     "lint": "eslint . --cache && prettier . --check --cache",
     "example": "texample -g",
+    "toc": "toc README.md",
+    "posttoc": "prettier --write README.md",
     "prepublishOnly": "npm run build",
     "cov:html": "c8 -n src -r html -r text mocha",
     "test:lcov": "c8 -n src -r lcov -r text mocha",
-    "build": "rollup -c && dts-buddy"
+    "build": "rollup -c && dts-buddy && npm run toc"
   },
   "keywords": [
     "pino",
@@ -51,6 +53,7 @@
     "url": "git+https://github.com/allermedia/pino-gcp-transport.git"
   },
   "devDependencies": {
+    "@0dep/toc": "^1.0.1",
     "@eslint/js": "^10.0.1",
     "@rollup/plugin-commonjs": "^29.0.0",
     "@rollup/plugin-node-resolve": "^16.0.1",
@@ -63,15 +66,10 @@
     "chronokinesis": "^8.0.0",
     "dts-buddy": "^0.8.0",
     "eslint": "^10.0.2",
-    "exp-config": "^4.2.1",
-    "express": "^5.1.0",
-    "fastify": "^5.3.2",
     "globals": "^17.0.0",
-    "mocha": "^11.1.0",
+    "mocha": "^12.0.1",
     "nock": "^14.0.2",
-    "pino": "^10.0.0",
     "pino-abstract-transport": "^3.0.0",
-    "pino-pretty": "^13.0.0",
     "prettier": "^3.2.5",
     "rollup": "^4.38.0",
     "supertest": "^7.1.0",
@@ -86,6 +84,10 @@
     "lib",
     "types",
     "index.d.ts",
-    "tracing.d.ts"
+    "tracing.d.ts",
+    "CHANGELOG.md"
+  ],
+  "workspaces": [
+    "example"
   ]
 }
