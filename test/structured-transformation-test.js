@@ -1,5 +1,4 @@
 import { Writable, pipeline } from 'node:stream';
-import { fileURLToPath } from 'node:url';
 
 import abstractTransport from 'pino-abstract-transport';
 import { pino } from 'pino';
@@ -344,7 +343,7 @@ describe('StructuredTransformation', () => {
     expect(logMsg).to.have.property('logging.googleapis.com/sourceLocation');
     expect(logMsg['logging.googleapis.com/sourceLocation'])
       .to.have.property('file')
-      .that.equal(`file://${fileURLToPath(import.meta.url)}`);
+      .that.equal(import.meta.url);
     expect(logMsg['logging.googleapis.com/sourceLocation']).to.have.property('line').that.is.a('number');
     expect(logMsg['logging.googleapis.com/sourceLocation']).to.have.property('function', 'Context.<anonymous>');
   });
@@ -368,7 +367,7 @@ describe('StructuredTransformation', () => {
     expect(logMsg).to.have.property('logging.googleapis.com/sourceLocation');
     expect(logMsg['logging.googleapis.com/sourceLocation'])
       .to.have.property('file')
-      .that.equal(`file://${fileURLToPath(import.meta.url)}`);
+      .that.equal(import.meta.url);
     expect(logMsg['logging.googleapis.com/sourceLocation']).to.have.property('line').that.is.a('number');
     expect(logMsg['logging.googleapis.com/sourceLocation']).to.have.property('function', 'Context.<anonymous>');
 
