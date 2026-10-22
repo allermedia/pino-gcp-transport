@@ -17,6 +17,7 @@ Convert pino stdout logging to structured json suitable for google cloud logging
   - [Express middleware](#express-middleware)
   - [Fastify hook](#fastify-hook)
 - [Logger example](#logger-example)
+- [Logging errors](#logging-errors)
 - [Span Context](#span-context)
 - [The projectId](#the-projectid)
 - [References](#references)
@@ -301,6 +302,36 @@ export default pino(
   transport
 );
 ```
+
+## Logging errors
+
+Log errors under the `err` key, either by passing the error as the first argument or as `err` in the merging object. The transport maps the error stack to `textPayload`, which makes the log entry show up in [Error Reporting ⇗](https://cloud.google.com/error-reporting/docs/formatting-error-messages), and the first stack frame to `logging.googleapis.com/sourceLocation`.
+
+```javascript
+import pino from 'pino';
+import compose from '@aller/pino-gcp-transport';
+
+const logger = pino(compose());
+
+logger.error(new Error('Something failed'));
+logger.error({ err: new Error('Request failed'), userId: 42 }, 'could not fetch user');
+```
+
+Logged as:
+
+```json
+{
+  "message": "could not fetch user",
+  "err": { "type": "Error", "message": "Request failed", "stack": "Error: Request failed\n    at file:///app/index.js:7:21\n ..." },
+  "textPayload": "Error: Request failed\n    at file:///app/index.js:7:21\n ...",
+  "logging.googleapis.com/sourceLocation": { "file": "file:///app/index.js", "line": 7 },
+  "userId": 42,
+  "timestamp": { "seconds": 1792660906, "nanos": 333000000 },
+  "severity": "ERROR"
+}
+```
+
+An error logged under any other key, e.g. `logger.error({ error })`, is not serialized by pino and gets neither `textPayload` nor source location. Add `err` to `ignoreKeys` to drop the serialized error from `jsonPayload` while keeping `textPayload`.
 
 ## Span Context
 

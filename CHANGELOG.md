@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+## v1.0.3 - 2026-10-22
+
+- document how to log errors so they get `textPayload` and source location
+
+## v1.0.2 - 2026-09-16
+
+- include CHANGELOG in published package
+- add table of contents to README
+
 ## v1.0.1 - 2026-07-30
 
 - fix type declarations: optional arguments to `compose`, `attachTraceIdHandler`, `getLogTrace`, and span context functions are now declared optional, and handlers may be synchronous
